@@ -26,12 +26,14 @@ Planned to be extended later to other areas (with different product lists).
   - Error messages thrown by the server that surface on the site (in `saveOrder`).
   - The weekly debt email body/subject (the employee reads it).
   - Sheet tab names, column headers, and the admin "Kurulum" menu (the manager reads them).
-- So in `Code.gs` the identifiers are English but some string *values* are Turkish by design.
+- So in `Code.js` the identifiers are English but some string *values* are Turkish by design.
 
 ## Tech and key constraints
 
 - **Google Apps Script + Google Sheets.** No separate server, database, or hosting.
-- `Code.gs` is **server-side Apps Script, not browser JS** (written ES5-style for V8/Rhino).
+- `Code.js` is **server-side Apps Script, not browser JS** (written ES5-style for V8/Rhino).
+  The `.js` extension is only for local editor highlighting; its content is pasted into the
+  Apps Script editor's `.gs` server file (you paste the code, not the file).
   - No `npm`, `node_modules`, build step, or packages. Do not add dependencies.
   - No DOM; uses GAS services like `SpreadsheetApp`, `HtmlService`, `MailApp`.
 - `Index.html` is the client (phone browser). It talks to the server via **`google.script.run`**
@@ -43,7 +45,7 @@ Planned to be extended later to other areas (with different product lists).
 
 | File | Role |
 |------|------|
-| `Code.gs` | Server: `doGet` (serves the form), `getData`, `saveOrder`, `sendWeeklyEmails`, admin menu + helpers. |
+| `Code.js` | Server: `doGet` (serves the form), `getData`, `saveOrder`, `sendWeeklyEmails`, admin menu + helpers. |
 | `Index.html` | Form UI (name + product selection, live total, save/done screens). |
 | `README.md` | End-user / setup guide (create Sheet, paste, publish, QR). |
 | `CLAUDE.md` | Short pointer to this file. |
@@ -57,7 +59,7 @@ Planned to be extended later to other areas (with different product lists).
   - Each order is written as **one row per product**.
   - Rows where `Ödendi` (paid) is FALSE count as debt; the weekly email sums only those.
 
-Tab names and headers are defined by the constants at the top of `Code.gs`
+Tab names and headers are defined by the constants at the top of `Code.js`
 (`SHEET_*`, `HEADERS_*`). If you change one, update both places.
 
 ## Conventions

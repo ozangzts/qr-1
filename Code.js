@@ -97,8 +97,11 @@ function saveOrder(order) {
     return [now, order.name, order.email || '', it.product, quantity, unitPrice, amount, false];
   });
 
-  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, HEADERS_RECORDS.length)
-    .setValues(rows);
+  var startRow = sheet.getLastRow() + 1;
+  sheet.getRange(startRow, 1, rows.length, HEADERS_RECORDS.length).setValues(rows);
+  // Render the "Odendi" (paid) flag as a checkbox on just these new rows, so the
+  // column stays tidy (no stray checkboxes/values on empty rows below the data).
+  sheet.getRange(startRow, 8, rows.length, 1).insertCheckboxes();
 
   return { ok: true, total: total };
 }

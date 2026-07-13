@@ -13,7 +13,7 @@ No hosting, free. Everything runs on Google Sheets + Apps Script.
 
 | File | Purpose |
 |------|---------|
-| `Code.gs` | Server side: serves the form, writes records to the Sheet, and (optionally) sends the weekly email. |
+| `Code.js` | Server side: serves the form, writes records to the Sheet, and (optionally) sends the weekly email. |
 | `Index.html` | The form UI that opens on the phone (name + product selection). |
 
 ## Setup (one-time, ~10 min)
@@ -22,7 +22,7 @@ No hosting, free. Everything runs on Google Sheets + Apps Script.
    (e.g. "Kantin Kayıt").
 2. Open **Extensions → Apps Script**.
 3. In the editor:
-   - Delete the contents of the default `Code.gs` and paste this repo's **`Code.gs`**.
+   - Delete the contents of the default `Code.js` and paste this repo's **`Code.js`**.
    - Add a new file with **+** → type **HTML** → name it exactly **`Index`** (the `.html`
      is added automatically). Paste this repo's **`Index.html`** into it.
    - Save (💾).
@@ -75,4 +75,4 @@ ready. To enable it:
 ## Extending later
 
 The same structure can be copied for other areas: changing the `Ürünler` tab is enough for
-most scenarios. If a different flow is needed, make small additions to the form and `Code.gs`.
+most scenarios. If a different flow is needed, make small additions to the form and `Code.js`.

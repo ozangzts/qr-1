@@ -8,7 +8,7 @@
     LOCAL TEST HARNESS - not deployed.
     Mirrors Index.html but replaces the Apps Script backend (google.script.run,
     SpreadsheetApp, MailApp) with an in-memory mock. Records persist in the
-    browser's localStorage. Fake employee/product lists match Code.gs SAMPLE_* data.
+    browser's localStorage. Fake employee/product lists match Code.js SAMPLE_* data.
     Just double-click this file to open it in a browser; no Google account needed.
   -->
   <style>
@@ -155,8 +155,8 @@
 
   <script>
     /* ===================================================================
-     * MOCK BACKEND - stands in for Code.gs / google.script.run.
-     * Fake data mirrors SAMPLE_EMPLOYEES / SAMPLE_PRODUCTS in Code.gs.
+     * MOCK BACKEND - stands in for Code.js / google.script.run.
+     * Fake data mirrors SAMPLE_EMPLOYEES / SAMPLE_PRODUCTS in Code.js.
      * =================================================================== */
     var FAKE_EMPLOYEES = [
       { name: 'Ayşe Yılmaz', email: 'ayse.yilmaz@example.com' },
