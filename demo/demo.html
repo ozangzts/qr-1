@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kantin Kayıt - DEMO</title>
+  <!--
+    LOCAL TEST HARNESS - not deployed.
+    Mirrors Index.html but replaces the Apps Script backend (google.script.run,
+    SpreadsheetApp, MailApp) with an in-memory mock. Records persist in the
+    browser's localStorage. Fake employee/product lists match Code.gs SAMPLE_* data.
+    Just double-click this file to open it in a browser; no Google account needed.
+  -->
+  <style>
+    :root {
+      --bg: #f4f5f7; --card: #ffffff; --ink: #1a1a1a; --muted: #6b7280;
+      --line: #e5e7eb; --brand: #2563eb; --brand-dark: #1d4ed8; --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 48px; }
+    header h1 { font-size: 22px; margin: 8px 0 2px; }
+    header p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    .demo-badge {
+      display: inline-block; background: #fef3c7; color: #92400e; font-size: 12px;
+      font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 12px;
+    }
+
+    label { display: block; font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+    select {
+      width: 100%; padding: 12px; font-size: 16px; border: 1px solid var(--line);
+      border-radius: 10px; background: var(--card); appearance: none; -webkit-appearance: none;
+    }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+
+    .product { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); gap: 12px; }
+    .product:last-child { border-bottom: none; }
+    .product-name { font-size: 15px; }
+    .product-price { font-size: 13px; color: var(--muted); }
+
+    .qty { display: flex; align-items: center; gap: 10px; }
+    .qty button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line); background: #f9fafb; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink); }
+    .qty button:active { background: #eef0f3; }
+    .qty .val { min-width: 22px; text-align: center; font-size: 16px; font-weight: 600; }
+
+    .total { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; font-weight: 700; margin: 4px 2px 16px; }
+    .total span:last-child { color: var(--brand); }
+
+    button.save { width: 100%; padding: 15px; font-size: 17px; font-weight: 700; color: #fff; background: var(--brand); border: none; border-radius: 12px; cursor: pointer; }
+    button.save:disabled { background: #9ca3af; cursor: not-allowed; }
+    button.save:active:not(:disabled) { background: var(--brand-dark); }
+    button.ghost { width: 100%; padding: 13px; margin-top: 10px; font-size: 15px; background: none; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; color: var(--ink); }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+    .overlay .sheet { background: var(--card); width: 100%; max-width: 520px; border-radius: 16px 16px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); max-height: 90vh; overflow-y: auto; }
+    .overlay h2 { margin: 4px 0 14px; font-size: 19px; }
+    .c-name { font-weight: 700; margin-bottom: 8px; }
+    .c-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+    .c-item:last-of-type { border-bottom: none; }
+    .c-item .q { color: var(--muted); }
+    .ask { text-align: center; font-weight: 700; margin: 16px 0; }
+
+    .status { text-align: center; padding: 40px 0; color: var(--muted); }
+    .message { text-align: center; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-weight: 600; }
+    .message.ok { background: #dcfce7; color: #166534; }
+    .message.error { background: #fee2e2; color: #991b1b; }
+
+    .done { text-align: center; padding: 32px 16px; }
+    .done .check { font-size: 56px; }
+    .done h2 { margin: 8px 0; }
+    .done .again { margin-top: 20px; background: none; border: 1px solid var(--line); padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; color: var(--ink); }
+
+    /* Debug panel - only in the demo */
+    .panel { max-width: 720px; margin: 24px auto 0; padding: 0 16px 48px; }
+    .panel h3 { border-top: 1px dashed var(--line); padding-top: 20px; }
+    .panel .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .panel .tools button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); cursor: pointer; font-size: 14px; }
+    table.rec { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); }
+    table.rec th, table.rec td { border: 1px solid var(--line); padding: 6px 8px; text-align: left; }
+    table.rec th { background: #f3f4f6; }
+    .email-preview { margin-top: 16px; }
+    .email-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .email-card .to { font-size: 12px; color: var(--muted); }
+    .email-card table { border-collapse: collapse; margin-top: 8px; }
+    .email-card td, .email-card th { border: 1px solid var(--line); padding: 4px 8px; font-size: 13px; }
+    .empty { color: var(--muted); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="demo-badge">DEMO · veriler tarayıcıda tutulur, Google'a gitmez</div>
+      <h1>🥪 Kantin Kayıt</h1>
+      <p>İsminizi ve aldıklarınızı seçip kaydedin.</p>
+    </header>
+
+    <div id="loading" class="status">Yükleniyor…</div>
+
+    <div id="form" style="display:none">
+      <div id="message"></div>
+      <div class="card">
+        <label for="employee">İsim</label>
+        <select id="employee"><option value="">— Seçin —</option></select>
+      </div>
+      <div class="card">
+        <label>Ürünler</label>
+        <div id="products"></div>
+      </div>
+      <div class="total">
+        <span>Toplam</span>
+        <span id="totalAmount">0.00 ₺</span>
+      </div>
+      <button id="save" class="save" disabled>Kaydet</button>
+    </div>
+
+    <div id="confirm" class="overlay" style="display:none">
+      <div class="sheet">
+        <h2>Siparişi onayla</h2>
+        <div id="confirmName" class="c-name"></div>
+        <div id="confirmItems"></div>
+        <div class="total"><span>Toplam</span><span id="confirmTotal">0.00 ₺</span></div>
+        <div id="confirmMessage"></div>
+        <p class="ask">Kaydetmek istediğinize emin misiniz?</p>
+        <button id="confirmYes" class="save">Evet, kaydet</button>
+        <button id="confirmBack" class="ghost">Geri dön</button>
+      </div>
+    </div>
+
+    <div id="done" class="done" style="display:none">
+      <div class="check">✅</div>
+      <h2>Kaydedildi!</h2>
+      <p id="doneTotal" class="muted"></p>
+      <button class="again" onclick="restart()">Yeni kayıt</button>
+    </div>
+  </div>
+
+  <!-- Debug panel (demo only) -->
+  <div class="panel">
+    <h3>🛠️ Test paneli</h3>
+    <div class="tools">
+      <button onclick="renderRecords()">Kayıtları yenile</button>
+      <button onclick="previewEmails()">Haftalık e-postayı önizle</button>
+      <button onclick="clearRecords()">Tüm kayıtları sil</button>
+    </div>
+    <p class="muted" style="font-size:13px;margin-top:0">
+      "Odendi" kutusunu işaretleyince o satır borçtan düşer; e-posta önizlemesi sadece ödenmemişleri toplar.
+    </p>
+    <div id="records"></div>
+    <div id="emailPreview" class="email-preview"></div>
+  </div>
+
+  <script>
+    /* ===================================================================
+     * MOCK BACKEND - stands in for Code.gs / google.script.run.
+     * Fake data mirrors SAMPLE_EMPLOYEES / SAMPLE_PRODUCTS in Code.gs.
+     * =================================================================== */
+    var FAKE_EMPLOYEES = [
+      { name: 'Ayşe Yılmaz', email: 'ayse.yilmaz@example.com' },
+      { name: 'Mehmet Demir', email: 'mehmet.demir@example.com' },
+      { name: 'Elif Kaya', email: 'elif.kaya@example.com' },
+      { name: 'Burak Şahin', email: 'burak.sahin@example.com' },
+      { name: 'Zeynep Çelik', email: 'zeynep.celik@example.com' }
+    ];
+    var FAKE_PRODUCTS = [
+      { name: 'Tost', price: 45 }, { name: 'Sandviç', price: 40 },
+      { name: 'Çay', price: 10 }, { name: 'Kahve', price: 25 },
+      { name: 'Su', price: 10 }, { name: 'Ayran', price: 15 }, { name: 'Kola', price: 25 }
+    ];
+    var STORAGE_KEY = 'kantin_demo_records';
+
+    function loadStored() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch (e) { return []; }
+    }
+    function saveStored(rows) { localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); }
+
+    var backend = {
+      getData: function () {
+        return {
+          employees: FAKE_EMPLOYEES.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'tr'); }),
+          products: FAKE_PRODUCTS.slice()
+        };
+      },
+      saveOrder: function (order) {
+        if (!order || !order.name) throw new Error('Lütfen isminizi seçin.');
+        var items = (order.items || []).filter(function (it) { return it && it.product && Number(it.quantity) > 0; });
+        if (items.length === 0) throw new Error('Lütfen en az bir ürün seçin.');
+
+        var prices = {};
+        FAKE_PRODUCTS.forEach(function (p) { prices[p.name] = p.price; });
+
+        var rows = loadStored();
+        var now = new Date().toISOString();
+        var total = 0;
+        items.forEach(function (it) {
+          var quantity = Number(it.quantity);
+          var unitPrice = Number(prices[it.product]) || 0;
+          var amount = quantity * unitPrice;
+          total += amount;
+          rows.push({ time: now, name: order.name, email: order.email || '', product: it.product, quantity: quantity, unitPrice: unitPrice, amount: amount, paid: false });
+        });
+        saveStored(rows);
+        return { ok: true, total: total };
+      }
+    };
+
+    // Fake google.script.run: fresh builder each access, async success/failure like the real thing.
+    window.google = { script: {} };
+    Object.defineProperty(window.google.script, 'run', {
+      get: function () {
+        var handlers = {};
+        function run(fn, arg) {
+          setTimeout(function () {
+            try { handlers.success && handlers.success(fn(arg)); }
+            catch (e) { handlers.failure ? handlers.failure(e) : (function () { throw e; })(); }
+          }, 150);
+        }
+        var api = {
+          withSuccessHandler: function (fn) { handlers.success = fn; return api; },
+          withFailureHandler: function (fn) { handlers.failure = fn; return api; },
+          getData: function () { run(backend.getData); },
+          saveOrder: function (order) { run(backend.saveOrder, order); }
+        };
+        return api;
+      }
+    });
+
+    /* ===================================================================
+     * FORM LOGIC - identical to Index.html.
+     * =================================================================== */
+    var PRODUCTS = [];
+    var quantities = {};
+
+    google.script.run
+      .withSuccessHandler(onData)
+      .withFailureHandler(function (e) { document.getElementById('loading').textContent = 'Veri yüklenemedi: ' + e.message; })
+      .getData();
+
+    function onData(data) {
+      var sel = document.getElementById('employee');
+      data.employees.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c.name; o.textContent = c.name; o.dataset.email = c.email;
+        sel.appendChild(o);
+      });
+
+      PRODUCTS = data.products;
+      var box = document.getElementById('products');
+      PRODUCTS.forEach(function (p) {
+        quantities[p.name] = 0;
+        var row = document.createElement('div');
+        row.className = 'product';
+        row.innerHTML =
+          '<div><div class="product-name">' + p.name + '</div><div class="product-price">' + p.price.toFixed(2) + ' ₺</div></div>' +
+          '<div class="qty"><button type="button" aria-label="azalt">−</button><span class="val" id="val-' + slug(p.name) + '">0</span><button type="button" aria-label="arttır">+</button></div>';
+        var btns = row.querySelectorAll('button');
+        btns[0].onclick = function () { change(p.name, -1); };
+        btns[1].onclick = function () { change(p.name, 1); };
+        box.appendChild(row);
+      });
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+      sel.onchange = refresh;
+      document.getElementById('save').onclick = showConfirm;
+      document.getElementById('confirmYes').onclick = performSave;
+      document.getElementById('confirmBack').onclick = hideConfirm;
+      renderRecords();
+    }
+
+    function change(product, delta) {
+      quantities[product] = Math.max(0, (quantities[product] || 0) + delta);
+      document.getElementById('val-' + slug(product)).textContent = quantities[product];
+      calculate(); refresh();
+    }
+    function calculate() {
+      var total = 0;
+      PRODUCTS.forEach(function (p) { total += (quantities[p.name] || 0) * p.price; });
+      document.getElementById('totalAmount').textContent = total.toFixed(2) + ' ₺';
+      return total;
+    }
+    function refresh() {
+      var hasName = !!document.getElementById('employee').value;
+      var hasProduct = PRODUCTS.some(function (p) { return quantities[p.name] > 0; });
+      document.getElementById('save').disabled = !(hasName && hasProduct);
+    }
+    // Step 1: build the summary and ask for confirmation (no write yet).
+    function showConfirm() {
+      var sel = document.getElementById('employee');
+      var box = document.getElementById('confirmItems');
+      box.innerHTML = '';
+      var total = 0;
+      PRODUCTS.forEach(function (p) {
+        var q = quantities[p.name];
+        if (q <= 0) return;
+        var amount = q * p.price;
+        total += amount;
+        var row = document.createElement('div');
+        row.className = 'c-item';
+        row.innerHTML = '<span>' + p.name + ' <span class="q">× ' + q + '</span></span><span>' + amount.toFixed(2) + ' ₺</span>';
+        box.appendChild(row);
+      });
+      document.getElementById('confirmName').textContent = sel.value;
+      document.getElementById('confirmTotal').textContent = total.toFixed(2) + ' ₺';
+      document.getElementById('confirmMessage').innerHTML = '';
+      document.getElementById('confirm').style.display = 'flex';
+    }
+
+    function hideConfirm() {
+      document.getElementById('confirm').style.display = 'none';
+    }
+
+    // Step 2: user confirmed -> actually write to the (mock) backend.
+    function performSave() {
+      var sel = document.getElementById('employee');
+      var opt = sel.options[sel.selectedIndex];
+      var items = PRODUCTS.filter(function (p) { return quantities[p.name] > 0; })
+        .map(function (p) { return { product: p.name, quantity: quantities[p.name] }; });
+      var btn = document.getElementById('confirmYes');
+      btn.disabled = true; btn.textContent = 'Kaydediliyor…';
+      google.script.run
+        .withSuccessHandler(function (result) {
+          hideConfirm();
+          document.getElementById('form').style.display = 'none';
+          document.getElementById('done').style.display = 'block';
+          document.getElementById('doneTotal').textContent = 'Toplam: ' + result.total.toFixed(2) + ' ₺';
+          btn.disabled = false; btn.textContent = 'Evet, kaydet';
+          renderRecords();
+        })
+        .withFailureHandler(function (e) {
+          var m = document.getElementById('confirmMessage');
+          m.className = 'message error';
+          m.textContent = e.message || 'Bir hata oluştu.';
+          btn.disabled = false; btn.textContent = 'Evet, kaydet';
+        })
+        .saveOrder({ name: sel.value, email: opt ? (opt.dataset.email || '') : '', items: items });
+    }
+    function restart() {
+      hideConfirm();
+      document.getElementById('employee').value = '';
+      PRODUCTS.forEach(function (p) { quantities[p.name] = 0; document.getElementById('val-' + slug(p.name)).textContent = '0'; });
+      calculate(); refresh();
+      document.getElementById('message').innerHTML = '';
+      document.getElementById('done').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+      document.getElementById('save').textContent = 'Kaydet';
+    }
+    function showMessage(text, type) {
+      var el = document.getElementById('message');
+      el.className = 'message ' + type; el.textContent = text;
+    }
+    function slug(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+    /* ===================================================================
+     * DEBUG PANEL - demo only (no equivalent in the real app).
+     * =================================================================== */
+    function money(v) { return (Number(v) || 0).toFixed(2) + ' ₺'; }
+
+    function renderRecords() {
+      var rows = loadStored();
+      var box = document.getElementById('records');
+      if (rows.length === 0) { box.innerHTML = '<p class="empty">Henüz kayıt yok.</p>'; return; }
+      var html = '<table class="rec"><tr><th>Zaman</th><th>İsim</th><th>Ürün</th><th>Adet</th><th>Tutar</th><th>Ödendi</th></tr>';
+      rows.forEach(function (r, i) {
+        var t = r.time ? new Date(r.time).toLocaleString('tr-TR') : '';
+        html += '<tr><td>' + t + '</td><td>' + r.name + '</td><td>' + r.product + '</td>' +
+          '<td align="center">' + r.quantity + '</td><td align="right">' + money(r.amount) + '</td>' +
+          '<td align="center"><input type="checkbox" ' + (r.paid ? 'checked' : '') + ' onchange="togglePaid(' + i + ')"></td></tr>';
+      });
+      html += '</table>';
+      box.innerHTML = html;
+    }
+    function togglePaid(i) {
+      var rows = loadStored();
+      if (rows[i]) { rows[i].paid = !rows[i].paid; saveStored(rows); renderRecords(); }
+    }
+    function clearRecords() {
+      if (!confirm('Tüm demo kayıtları silinsin mi?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('emailPreview').innerHTML = '';
+      renderRecords();
+    }
+
+    // Mirrors sendWeeklyEmails(): group unpaid rows by email and render the mail HTML.
+    function previewEmails() {
+      var rows = loadStored();
+      var groups = {};
+      rows.forEach(function (r) {
+        if (r.paid) return;
+        if (!r.email) return;
+        if (!groups[r.email]) groups[r.email] = { name: r.name, items: [], total: 0 };
+        groups[r.email].items.push(r);
+        groups[r.email].total += Number(r.amount) || 0;
+      });
+      var box = document.getElementById('emailPreview');
+      var emails = Object.keys(groups).filter(function (e) { return groups[e].total > 0; });
+      if (emails.length === 0) { box.innerHTML = '<p class="empty">Gönderilecek e-posta yok (ödenmemiş borç bulunmuyor).</p>'; return; }
+      var html = '<h4>Gidecek e-postalar (' + emails.length + ')</h4>';
+      emails.forEach(function (email) {
+        var g = groups[email];
+        var itemRows = g.items.map(function (it) {
+          return '<tr><td>' + it.product + '</td><td align="center">' + it.quantity + '</td><td align="right">' + money(it.amount) + '</td></tr>';
+        }).join('');
+        html += '<div class="email-card">' +
+          '<div class="to">Kime: ' + email + '</div>' +
+          '<div><b>Konu:</b> Kantin borcunuz: ' + money(g.total) + '</div>' +
+          '<p>Merhaba ' + g.name + ', aşağıdaki ürünler için toplam borcunuz: <b>' + money(g.total) + '</b></p>' +
+          '<table><tr><th>Ürün</th><th>Adet</th><th>Tutar</th></tr>' + itemRows + '</table>' +
+          '</div>';
+      });
+      box.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

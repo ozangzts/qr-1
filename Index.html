@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --brand-dark: #1d4ed8;
+      --ok: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 48px; }
+    header h1 { font-size: 22px; margin: 8px 0 2px; }
+    header p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+
+    label { display: block; font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+    select {
+      width: 100%; padding: 12px; font-size: 16px;
+      border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+      appearance: none; -webkit-appearance: none;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px;
+    }
+
+    .product {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--line); gap: 12px;
+    }
+    .product:last-child { border-bottom: none; }
+    .product-name { font-size: 15px; }
+    .product-price { font-size: 13px; color: var(--muted); }
+
+    .qty { display: flex; align-items: center; gap: 10px; }
+    .qty button {
+      width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line);
+      background: #f9fafb; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink);
+    }
+    .qty button:active { background: #eef0f3; }
+    .qty .val { min-width: 22px; text-align: center; font-size: 16px; font-weight: 600; }
+
+    .total {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 18px; font-weight: 700; margin: 4px 2px 16px;
+    }
+    .total span:last-child { color: var(--brand); }
+
+    button.save {
+      width: 100%; padding: 15px; font-size: 17px; font-weight: 700;
+      color: #fff; background: var(--brand); border: none; border-radius: 12px; cursor: pointer;
+    }
+    button.save:disabled { background: #9ca3af; cursor: not-allowed; }
+    button.save:active:not(:disabled) { background: var(--brand-dark); }
+    button.ghost {
+      width: 100%; padding: 13px; margin-top: 10px; font-size: 15px;
+      background: none; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; color: var(--ink);
+    }
+
+    /* Confirmation overlay */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      display: flex; align-items: flex-end; justify-content: center; z-index: 10;
+    }
+    .overlay .sheet {
+      background: var(--card); width: 100%; max-width: 520px;
+      border-radius: 16px 16px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+      max-height: 90vh; overflow-y: auto;
+    }
+    .overlay h2 { margin: 4px 0 14px; font-size: 19px; }
+    .c-name { font-weight: 700; margin-bottom: 8px; }
+    .c-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+    .c-item:last-of-type { border-bottom: none; }
+    .c-item .q { color: var(--muted); }
+    .ask { text-align: center; font-weight: 700; margin: 16px 0; }
+
+    .status { text-align: center; padding: 40px 0; color: var(--muted); }
+    .message { text-align: center; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-weight: 600; }
+    .message.ok { background: #dcfce7; color: #166534; }
+    .message.error { background: #fee2e2; color: #991b1b; }
+
+    .done { text-align: center; padding: 32px 16px; }
+    .done .check { font-size: 56px; }
+    .done h2 { margin: 8px 0; }
+    .done .again {
+      margin-top: 20px; background: none; border: 1px solid var(--line);
+      padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; color: var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <!-- Visible strings are Turkish on purpose: this is what the employee reads on the site. -->
+  <div class="wrap">
+    <header>
+      <h1>🥪 Kantin Kayıt</h1>
+      <p>İsminizi ve aldıklarınızı seçip kaydedin.</p>
+    </header>
+
+    <div id="loading" class="status">Yükleniyor…</div>
+
+    <div id="form" style="display:none">
+      <div id="message"></div>
+
+      <div class="card">
+        <label for="employee">İsim</label>
+        <select id="employee"><option value="">— Seçin —</option></select>
+      </div>
+
+      <div class="card">
+        <label>Ürünler</label>
+        <div id="products"></div>
+      </div>
+
+      <div class="total">
+        <span>Toplam</span>
+        <span id="totalAmount">0.00 ₺</span>
+      </div>
+
+      <button id="save" class="save" disabled>Kaydet</button>
+    </div>
+
+    <div id="confirm" class="overlay" style="display:none">
+      <div class="sheet">
+        <h2>Siparişi onayla</h2>
+        <div id="confirmName" class="c-name"></div>
+        <div id="confirmItems"></div>
+        <div class="total"><span>Toplam</span><span id="confirmTotal">0.00 ₺</span></div>
+        <div id="confirmMessage"></div>
+        <p class="ask">Kaydetmek istediğinize emin misiniz?</p>
+        <button id="confirmYes" class="save">Evet, kaydet</button>
+        <button id="confirmBack" class="ghost">Geri dön</button>
+      </div>
+    </div>
+
+    <div id="done" class="done" style="display:none">
+      <div class="check">✅</div>
+      <h2>Kaydedildi!</h2>
+      <p id="doneTotal" class="muted"></p>
+      <button class="again" onclick="restart()">Yeni kayıt</button>
+    </div>
+  </div>
+
+  <script>
+    var PRODUCTS = [];
+    var quantities = {}; // product name -> quantity
+
+    google.script.run
+      .withSuccessHandler(onData)
+      .withFailureHandler(function (e) {
+        document.getElementById('loading').textContent = 'Veri yüklenemedi: ' + e.message;
+      })
+      .getData();
+
+    function onData(data) {
+      // Employees
+      var sel = document.getElementById('employee');
+      data.employees.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c.name;
+        o.textContent = c.name;
+        o.dataset.email = c.email;
+        sel.appendChild(o);
+      });
+
+      // Products
+      PRODUCTS = data.products;
+      var box = document.getElementById('products');
+      PRODUCTS.forEach(function (p) {
+        quantities[p.name] = 0;
+        var row = document.createElement('div');
+        row.className = 'product';
+        row.innerHTML =
+          '<div>' +
+            '<div class="product-name">' + p.name + '</div>' +
+            '<div class="product-price">' + p.price.toFixed(2) + ' ₺</div>' +
+          '</div>' +
+          '<div class="qty">' +
+            '<button type="button" aria-label="azalt">−</button>' +
+            '<span class="val" id="val-' + slug(p.name) + '">0</span>' +
+            '<button type="button" aria-label="arttır">+</button>' +
+          '</div>';
+        var btns = row.querySelectorAll('button');
+        btns[0].onclick = function () { change(p.name, -1); };
+        btns[1].onclick = function () { change(p.name, 1); };
+        box.appendChild(row);
+      });
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+      sel.onchange = refresh;
+      document.getElementById('save').onclick = showConfirm;
+      document.getElementById('confirmYes').onclick = performSave;
+      document.getElementById('confirmBack').onclick = hideConfirm;
+    }
+
+    function change(product, delta) {
+      quantities[product] = Math.max(0, (quantities[product] || 0) + delta);
+      document.getElementById('val-' + slug(product)).textContent = quantities[product];
+      calculate();
+      refresh();
+    }
+
+    function calculate() {
+      var total = 0;
+      PRODUCTS.forEach(function (p) { total += (quantities[p.name] || 0) * p.price; });
+      document.getElementById('totalAmount').textContent = total.toFixed(2) + ' ₺';
+      return total;
+    }
+
+    function refresh() {
+      var hasName = !!document.getElementById('employee').value;
+      var hasProduct = PRODUCTS.some(function (p) { return quantities[p.name] > 0; });
+      document.getElementById('save').disabled = !(hasName && hasProduct);
+    }
+
+    // Step 1: build the summary and ask for confirmation (no write yet).
+    function showConfirm() {
+      var sel = document.getElementById('employee');
+      var box = document.getElementById('confirmItems');
+      box.innerHTML = '';
+      var total = 0;
+      PRODUCTS.forEach(function (p) {
+        var q = quantities[p.name];
+        if (q <= 0) return;
+        var amount = q * p.price;
+        total += amount;
+        var row = document.createElement('div');
+        row.className = 'c-item';
+        row.innerHTML = '<span>' + p.name + ' <span class="q">× ' + q + '</span></span>' +
+          '<span>' + amount.toFixed(2) + ' ₺</span>';
+        box.appendChild(row);
+      });
+      document.getElementById('confirmName').textContent = sel.value;
+      document.getElementById('confirmTotal').textContent = total.toFixed(2) + ' ₺';
+      document.getElementById('confirmMessage').innerHTML = '';
+      document.getElementById('confirm').style.display = 'flex';
+    }
+
+    function hideConfirm() {
+      document.getElementById('confirm').style.display = 'none';
+    }
+
+    // Step 2: user confirmed -> actually write to the backend.
+    function performSave() {
+      var sel = document.getElementById('employee');
+      var opt = sel.options[sel.selectedIndex];
+      var items = PRODUCTS
+        .filter(function (p) { return quantities[p.name] > 0; })
+        .map(function (p) { return { product: p.name, quantity: quantities[p.name] }; });
+
+      var btn = document.getElementById('confirmYes');
+      btn.disabled = true;
+      btn.textContent = 'Kaydediliyor…';
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          hideConfirm();
+          document.getElementById('form').style.display = 'none';
+          document.getElementById('done').style.display = 'block';
+          document.getElementById('doneTotal').textContent =
+            'Toplam: ' + result.total.toFixed(2) + ' ₺';
+          btn.disabled = false;
+          btn.textContent = 'Evet, kaydet';
+        })
+        .withFailureHandler(function (e) {
+          var m = document.getElementById('confirmMessage');
+          m.className = 'message error';
+          m.textContent = e.message || 'Bir hata oluştu.';
+          btn.disabled = false;
+          btn.textContent = 'Evet, kaydet';
+        })
+        .saveOrder({
+          name: sel.value,
+          email: opt ? (opt.dataset.email || '') : '',
+          items: items
+        });
+    }
+
+    function restart() {
+      hideConfirm();
+      document.getElementById('employee').value = '';
+      PRODUCTS.forEach(function (p) {
+        quantities[p.name] = 0;
+        document.getElementById('val-' + slug(p.name)).textContent = '0';
+      });
+      calculate();
+      refresh();
+      document.getElementById('message').innerHTML = '';
+      document.getElementById('done').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+      document.getElementById('save').textContent = 'Kaydet';
+    }
+
+    function showMessage(text, type) {
+      var el = document.getElementById('message');
+      el.className = 'message ' + type;
+      el.textContent = text;
+    }
+
+    function slug(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+  </script>
+</body>
+</html>
