@@ -156,6 +156,7 @@
   <script>
     var PRODUCTS = [];
     var quantities = {}; // product name -> quantity
+    var LAST_EMP_KEY = 'kantin_last_email'; // per-device memory of the last selected person (by unique email)
 
     google.script.run
       .withSuccessHandler(onData)
@@ -165,13 +166,17 @@
       .getData();
 
     function onData(data) {
-      // Employees
+      // Employees. Names can repeat, so the option's VALUE is the unique email.
+      // The email is shown as a hint only when a name appears more than once.
       var sel = document.getElementById('employee');
+      var nameCounts = {};
+      data.employees.forEach(function (c) { nameCounts[c.name] = (nameCounts[c.name] || 0) + 1; });
       data.employees.forEach(function (c) {
         var o = document.createElement('option');
-        o.value = c.name;
-        o.textContent = c.name;
+        o.value = c.email || c.name;   // unique identifier (email); name only as a last resort
+        o.dataset.name = c.name;
         o.dataset.email = c.email;
+        o.textContent = (nameCounts[c.name] > 1 && c.email) ? (c.name + ' (' + c.email + ')') : c.name;
         sel.appendChild(o);
       });
 
@@ -197,6 +202,10 @@
         btns[1].onclick = function () { change(p.name, 1); };
         box.appendChild(row);
       });
+
+      // Pre-select the last person used on THIS device (matched by unique email).
+      var lastEmail = safeGet(LAST_EMP_KEY);
+      if (lastEmail) selectByValue(sel, lastEmail);
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('form').style.display = 'block';
@@ -243,7 +252,8 @@
           '<span>' + amount.toFixed(2) + ' ₺</span>';
         box.appendChild(row);
       });
-      document.getElementById('confirmName').textContent = sel.value;
+      var opt = sel.options[sel.selectedIndex];
+      document.getElementById('confirmName').textContent = opt ? opt.dataset.name : '';
       document.getElementById('confirmTotal').textContent = total.toFixed(2) + ' ₺';
       document.getElementById('confirmMessage').innerHTML = '';
       document.getElementById('confirm').style.display = 'flex';
@@ -267,6 +277,7 @@
 
       google.script.run
         .withSuccessHandler(function (result) {
+          safeSet(LAST_EMP_KEY, sel.value); // remember this person (by email) on this device
           hideConfirm();
           document.getElementById('form').style.display = 'none';
           document.getElementById('done').style.display = 'block';
@@ -283,7 +294,7 @@
           btn.textContent = 'Evet, kaydet';
         })
         .saveOrder({
-          name: sel.value,
+          name: opt ? opt.dataset.name : '',
           email: opt ? (opt.dataset.email || '') : '',
           items: items
         });
@@ -291,7 +302,8 @@
 
     function restart() {
       hideConfirm();
-      document.getElementById('employee').value = '';
+      // Keep the same person selected (they usually pay for themselves again).
+      document.getElementById('employee').value = safeGet(LAST_EMP_KEY) || '';
       PRODUCTS.forEach(function (p) {
         quantities[p.name] = 0;
         document.getElementById('val-' + slug(p.name)).textContent = '0';
@@ -311,6 +323,15 @@
     }
 
     function slug(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+
+    function selectByValue(sel, value) {
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === value) { sel.selectedIndex = i; return; }
+      }
+    }
+    // localStorage may be unavailable in some privacy modes; fail quietly.
+    function safeGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   </script>
 </body>
 </html>

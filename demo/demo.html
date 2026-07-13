@@ -160,6 +160,7 @@
      * =================================================================== */
     var FAKE_EMPLOYEES = [
       { name: 'Ayşe Yılmaz', email: 'ayse.yilmaz@example.com' },
+      { name: 'Ayşe Yılmaz', email: 'ayse.yilmaz2@example.com' }, // duplicate name on purpose (to test the email hint)
       { name: 'Mehmet Demir', email: 'mehmet.demir@example.com' },
       { name: 'Elif Kaya', email: 'elif.kaya@example.com' },
       { name: 'Burak Şahin', email: 'burak.sahin@example.com' },
@@ -234,6 +235,7 @@
      * =================================================================== */
     var PRODUCTS = [];
     var quantities = {};
+    var LAST_EMP_KEY = 'kantin_demo_last_email';
 
     google.script.run
       .withSuccessHandler(onData)
@@ -241,10 +243,16 @@
       .getData();
 
     function onData(data) {
+      // VALUE is the unique email; email shown as a hint only when a name repeats.
       var sel = document.getElementById('employee');
+      var nameCounts = {};
+      data.employees.forEach(function (c) { nameCounts[c.name] = (nameCounts[c.name] || 0) + 1; });
       data.employees.forEach(function (c) {
         var o = document.createElement('option');
-        o.value = c.name; o.textContent = c.name; o.dataset.email = c.email;
+        o.value = c.email || c.name;
+        o.dataset.name = c.name;
+        o.dataset.email = c.email;
+        o.textContent = (nameCounts[c.name] > 1 && c.email) ? (c.name + ' (' + c.email + ')') : c.name;
         sel.appendChild(o);
       });
 
@@ -262,6 +270,9 @@
         btns[1].onclick = function () { change(p.name, 1); };
         box.appendChild(row);
       });
+
+      var lastEmail = safeGet(LAST_EMP_KEY);
+      if (lastEmail) selectByValue(sel, lastEmail);
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('form').style.display = 'block';
@@ -304,7 +315,8 @@
         row.innerHTML = '<span>' + p.name + ' <span class="q">× ' + q + '</span></span><span>' + amount.toFixed(2) + ' ₺</span>';
         box.appendChild(row);
       });
-      document.getElementById('confirmName').textContent = sel.value;
+      var opt = sel.options[sel.selectedIndex];
+      document.getElementById('confirmName').textContent = opt ? opt.dataset.name : '';
       document.getElementById('confirmTotal').textContent = total.toFixed(2) + ' ₺';
       document.getElementById('confirmMessage').innerHTML = '';
       document.getElementById('confirm').style.display = 'flex';
@@ -324,6 +336,7 @@
       btn.disabled = true; btn.textContent = 'Kaydediliyor…';
       google.script.run
         .withSuccessHandler(function (result) {
+          safeSet(LAST_EMP_KEY, sel.value);
           hideConfirm();
           document.getElementById('form').style.display = 'none';
           document.getElementById('done').style.display = 'block';
@@ -337,11 +350,11 @@
           m.textContent = e.message || 'Bir hata oluştu.';
           btn.disabled = false; btn.textContent = 'Evet, kaydet';
         })
-        .saveOrder({ name: sel.value, email: opt ? (opt.dataset.email || '') : '', items: items });
+        .saveOrder({ name: opt ? opt.dataset.name : '', email: opt ? (opt.dataset.email || '') : '', items: items });
     }
     function restart() {
       hideConfirm();
-      document.getElementById('employee').value = '';
+      document.getElementById('employee').value = safeGet(LAST_EMP_KEY) || '';
       PRODUCTS.forEach(function (p) { quantities[p.name] = 0; document.getElementById('val-' + slug(p.name)).textContent = '0'; });
       calculate(); refresh();
       document.getElementById('message').innerHTML = '';
@@ -354,6 +367,13 @@
       el.className = 'message ' + type; el.textContent = text;
     }
     function slug(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+    function selectByValue(sel, value) {
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === value) { sel.selectedIndex = i; return; }
+      }
+    }
+    function safeGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
     /* ===================================================================
      * DEBUG PANEL - demo only (no equivalent in the real app).

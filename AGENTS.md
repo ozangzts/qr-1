@@ -65,6 +65,11 @@ Tab names and headers are defined by the constants at the top of `Code.gs`
 - Identifiers/functions in English camelCase (`saveOrder`, `getProducts`, `formatMoney`).
 - Money is rendered via `formatMoney()` (`"45.00 ₺"`).
 - Need a new piece of user data? Prefer a Sheet tab + header constant over hardcoding.
+- Employee `<option>` VALUE is the unique **email**, not the name (names can repeat);
+  `dataset.name` holds the display name. The email is appended to the label only when a
+  name is duplicated. `saveOrder` gets name from `dataset.name`, email from the value.
+- `Index.html` remembers the last selected person per device in `localStorage` by email
+  (`kantin_last_email`) and pre-selects it on load; demo uses `kantin_demo_last_email`.
 
 ## How to test
 
