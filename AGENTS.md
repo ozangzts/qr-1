@@ -51,11 +51,11 @@ Planned to be extended later to other areas (with different product lists).
 
 ## Data model (Google Sheet tabs)
 
-- **Calisanlar** (employees): `Ad Soyad` | `Eposta`
-- **Urunler** (products): `Urun` | `Fiyat`  (price in TL, numeric)
-- **Kayitlar** (records): `Zaman` | `Ad Soyad` | `Eposta` | `Urun` | `Adet` | `Birim Fiyat` | `Tutar` | `Odendi`
+- **Çalışanlar** (employees): `Ad Soyad` | `E-posta`
+- **Ürünler** (products): `Ürün` | `Fiyat`  (price in TL, numeric)
+- **Kayıtlar** (records): `Zaman` | `Ad Soyad` | `E-posta` | `Ürün` | `Adet` | `Birim Fiyat` | `Tutar` | `Ödendi`
   - Each order is written as **one row per product**.
-  - Rows where `Odendi` (paid) is FALSE count as debt; the weekly email sums only those.
+  - Rows where `Ödendi` (paid) is FALSE count as debt; the weekly email sums only those.
 
 Tab names and headers are defined by the constants at the top of `Code.gs`
 (`SHEET_*`, `HEADERS_*`). If you change one, update both places.
@@ -75,7 +75,7 @@ Tab names and headers are defined by the constants at the top of `Code.gs`
 
 - No automated tests; setup is manual and tied to a Google account.
 - To verify a change: follow `README.md` to paste into a test Sheet, publish, open the
-  URL on a phone/browser, create a record, and confirm the row appears in the `Kayitlar` tab.
+  URL on a phone/browser, create a record, and confirm the row appears in the `Kayıtlar` tab.
 - For email changes: run `sendWeeklyEmails` manually from the editor (no need to wait for the
   trigger) and confirm with a test mail to yourself. Gmail has a low daily send limit (~100).
 

@@ -29,7 +29,7 @@ No hosting, free. Everything runs on Google Sheets + Apps Script.
 4. **Close the editor, go back to the Sheet**, and reload the page. A new **"Kurulum"** menu
    appears at the top → **"Sayfaları oluştur ve örnek veri ekle"**. (The first time, Google
    asks for authorization → approve it.)
-   - The `Calisanlar`, `Urunler`, `Kayitlar` tabs are created and filled with sample data.
+   - The `Çalışanlar`, `Ürünler`, `Kayıtlar` tabs are created and filled with sample data.
 5. **Publish**: in the Apps Script editor, top-right **Deploy → New deployment** →
    type **Web app** →
    - *Execute as*: **Me (your account)**
@@ -45,19 +45,19 @@ the resulting image onto paper/a label. Anyone who scans it opens the form.
 
 ## Editing the lists
 
-- **Employees**: `Calisanlar` tab → `Ad Soyad` | `Eposta`. Add/remove rows, that's it.
-- **Products & prices**: `Urunler` tab → `Urun` | `Fiyat`. Change a price and the form updates automatically.
+- **Employees**: `Çalışanlar` tab → `Ad Soyad` | `E-posta`. Add/remove rows, that's it.
+- **Products & prices**: `Ürünler` tab → `Ürün` | `Fiyat`. Change a price and the form updates automatically.
 
 The sample data is placeholder; replace it from these tabs once the real list arrives.
 
 ## How records are stored
 
-Each record lands in the `Kayitlar` tab as **one row per product**:
+Each record lands in the `Kayıtlar` tab as **one row per product**:
 
-`Zaman | Ad Soyad | Eposta | Urun | Adet | Birim Fiyat | Tutar | Odendi`
+`Zaman | Ad Soyad | E-posta | Ürün | Adet | Birim Fiyat | Tutar | Ödendi`
 
-When a debt is settled, set the **`Odendi`** cell of the relevant rows to `TRUE` (checked);
-the weekly email counts only rows where `Odendi = FALSE` as debt.
+When a debt is settled, set the **`Ödendi`** cell of the relevant rows to `TRUE` (checked);
+the weekly email counts only rows where `Ödendi = FALSE` as debt.
 
 ## Weekly email (currently off)
 
@@ -74,5 +74,5 @@ ready. To enable it:
 
 ## Extending later
 
-The same structure can be copied for other areas: changing the `Urunler` tab is enough for
+The same structure can be copied for other areas: changing the `Ürünler` tab is enough for
 most scenarios. If a different flow is needed, make small additions to the form and `Code.gs`.

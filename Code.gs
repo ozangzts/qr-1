@@ -2,9 +2,9 @@
  * Company canteen / debt tracking - Google Apps Script backend.
  *
  * Sheet tabs (names kept Turkish because the manager reads them):
- *   Calisanlar : Ad Soyad | Eposta                         (employees)
- *   Urunler    : Urun | Fiyat                               (products)
- *   Kayitlar   : Zaman | Ad Soyad | Eposta | Urun | Adet | Birim Fiyat | Tutar | Odendi  (records)
+ *   Çalışanlar : Ad Soyad | E-posta                         (employees)
+ *   Ürünler    : Ürün | Fiyat                                (products)
+ *   Kayıtlar   : Zaman | Ad Soyad | E-posta | Ürün | Adet | Birim Fiyat | Tutar | Ödendi  (records)
  *
  * First-time setup: run "Kurulum > Sayfaları oluştur ve örnek veri ekle" from the
  * spreadsheet menu (or run setup() once from the editor).
@@ -13,13 +13,13 @@
  * the debt email, sheet tab/header names and the admin menu are intentionally Turkish.
  */
 
-var SHEET_EMPLOYEES = 'Calisanlar';
-var SHEET_PRODUCTS = 'Urunler';
-var SHEET_RECORDS = 'Kayitlar';
+var SHEET_EMPLOYEES = 'Çalışanlar';
+var SHEET_PRODUCTS = 'Ürünler';
+var SHEET_RECORDS = 'Kayıtlar';
 
-var HEADERS_EMPLOYEES = ['Ad Soyad', 'Eposta'];
-var HEADERS_PRODUCTS = ['Urun', 'Fiyat'];
-var HEADERS_RECORDS = ['Zaman', 'Ad Soyad', 'Eposta', 'Urun', 'Adet', 'Birim Fiyat', 'Tutar', 'Odendi'];
+var HEADERS_EMPLOYEES = ['Ad Soyad', 'E-posta'];
+var HEADERS_PRODUCTS = ['Ürün', 'Fiyat'];
+var HEADERS_RECORDS = ['Zaman', 'Ad Soyad', 'E-posta', 'Ürün', 'Adet', 'Birim Fiyat', 'Tutar', 'Ödendi'];
 
 /* ----------------------------------------------------------------------------
  * Web app
@@ -194,7 +194,7 @@ function setup() {
   SpreadsheetApp.getUi().alert('Kurulum tamam. Sayfalar hazır, örnek veriler eklendi.');
 }
 
-// Sample (placeholder) employee list - replace via the Calisanlar sheet once the real list arrives.
+// Sample (placeholder) employee list - replace via the Çalışanlar sheet once the real list arrives.
 var SAMPLE_EMPLOYEES = [
   ['Ayşe Yılmaz', 'ayse.yilmaz@example.com'],
   ['Mehmet Demir', 'mehmet.demir@example.com'],
@@ -203,7 +203,7 @@ var SAMPLE_EMPLOYEES = [
   ['Zeynep Çelik', 'zeynep.celik@example.com']
 ];
 
-// Sample product + price list (TL) - edit via the Urunler sheet.
+// Sample product + price list (TL) - edit via the Ürünler sheet.
 var SAMPLE_PRODUCTS = [
   ['Tost', 45],
   ['Sandviç', 40],
