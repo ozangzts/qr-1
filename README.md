@@ -6,9 +6,6 @@ Later, a weekly "you owe X ₺" email can be sent automatically.
 
 No hosting, free. Everything runs on Google Sheets + Apps Script.
 
-> Language note: the app's screen text and the debt email are Turkish (that's what people
-> read); the code and these docs are English.
-
 ## Files
 
 | File | Purpose |
