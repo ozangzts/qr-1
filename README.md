@@ -19,7 +19,10 @@ No hosting, free. Everything runs on Google Sheets + Apps Script.
    (e.g. "Kantin Kayıt").
 2. Open **Extensions → Apps Script**.
 3. In the editor:
-   - Delete the contents of the default `Code.js` and paste this repo's **`Code.js`**.
+   - Apps Script opens with a default server file named **`Code.gs`**. Delete its contents
+     and paste this repo's **`Code.js`** into it. (This repo uses the `.js` extension only for
+     local syntax highlighting; in Apps Script the server file is a `.gs` file — you copy the
+     code, not the file.)
    - Add a new file with **+** → type **HTML** → name it exactly **`Index`** (the `.html`
      is added automatically). Paste this repo's **`Index.html`** into it.
    - Save (💾).
