@@ -72,6 +72,28 @@ ready. To enable it:
 > is on Google Workspace, no extra setup is needed. If not, a separate solution (SMTP, etc.)
 > is required. Free Gmail has a low daily send limit (~100); Workspace is higher.
 
+## Handover (moving to the company account)
+
+The Sheet and its bound script travel together. Data (all records) is preserved; only the
+web app **URL changes, so the QR must be reprinted**. Steps:
+
+1. **Get the Sheet onto the company account.** Either transfer ownership (Share → make the
+   company account owner) or, if that's blocked (common between a personal Gmail and a
+   Workspace account), have the company account do **File → Make a copy** — the bound script
+   is copied too.
+2. **Re-authorize.** On the company account, open the Sheet → Apps Script → run once and
+   approve the permissions. Now the script runs *as* the company account (records and emails
+   use that identity).
+3. **Deploy fresh.** Company account: **Deploy → New deployment → Web app**, *Execute as*
+   **Me**, *Who has access* as needed → copy the new URL.
+4. **Regenerate the QR** from the new URL and reprint it.
+5. **Recreate the weekly-email trigger** on the company account if it's enabled (triggers are
+   per-user and do not transfer — see above).
+6. **Remove the old deployment** on the personal account so nothing keeps running under it.
+
+> Note: the "last selected person" memory lives in each phone's browser (`localStorage`), so
+> it may reset once the URL changes — harmless, everyone just picks their name once more.
+
 ## Extending later
 
 The same structure can be copied for other areas: changing the `Ürünler` tab is enough for
