@@ -81,9 +81,12 @@ web app **URL changes, so the QR must be reprinted**. Steps:
    company account owner) or, if that's blocked (common between a personal Gmail and a
    Workspace account), have the company account do **File → Make a copy** — the bound script
    is copied too.
-2. **Re-authorize.** On the company account, open the Sheet → Apps Script → run once and
-   approve the permissions. Now the script runs *as* the company account (records and emails
-   use that identity).
+2. **Re-authorize.** On the company account, open the Sheet → Apps Script → pick **`getData`**
+   from the function dropdown → click **Run** once → approve the permission prompt. The point
+   is only to trigger Google's consent screen (it lists every scope the whole project needs, so
+   one run authorizes all of them); `getData` just reads the lists and changes nothing. Do
+   **not** run `sendWeeklyEmails` for this — it actually sends the debt emails. Afterwards the
+   script runs *as* the company account (records and emails use that identity).
 3. **Deploy fresh.** Company account: **Deploy → New deployment → Web app**, *Execute as*
    **Me**, *Who has access* as needed → copy the new URL.
 4. **Regenerate the QR** from the new URL and reprint it.
