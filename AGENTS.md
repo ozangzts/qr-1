@@ -47,7 +47,9 @@ Planned to be extended later to other areas (with different product lists).
 |------|------|
 | `Code.js` | Server: `doGet` (serves the form), `getData`, `saveOrder`, `sendWeeklyEmails`, admin menu + helpers. |
 | `Index.html` | Form UI (name + product selection, live total, save/done screens). |
+| `GraphMail.js` | Optional add-on: send the debt email from Outlook/M365 via Microsoft Graph (app-only) instead of Gmail. Reuses `getSheet`/`SHEET_RECORDS`/`formatMoney` from `Code.js`. |
 | `README.md` | End-user / setup guide (create Sheet, paste, publish, QR). |
+| `MICROSOFT-EMAIL.md` | Setup guide for the Outlook/Graph email add-on (app registration, Script Properties, test). |
 | `CLAUDE.md` | Short pointer to this file. |
 | `AGENTS.md` | This file. |
 
