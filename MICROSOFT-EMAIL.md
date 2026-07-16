@@ -51,38 +51,65 @@ Then:
    - Name: e.g. `Kantin Mail`.
    - Supported account types: **Accounts in any organizational directory and personal
      Microsoft accounts** — so you can sign in with your `outlook.com` at consent time.
-   - **Redirect URI:** platform **Web**, value:
-     `https://script.google.com/macros/d/{SCRIPT_ID}/usercallback`
-     Get `{SCRIPT_ID}` from Apps Script → Project Settings → "Script ID". (You can also add
-     this later, after step 3, once you know the ID.)
+   - **Redirect URI:** leave it empty for now — you will add the exact value in step 4 (it
+     depends on the Script ID, and it must match *character for character*).
    - **Register**.
-3. Copy the **Application (client) ID**.
-4. **Certificates & secrets → New client secret** → copy the secret **Value** (shown once).
+3. On the app's **Overview** page, copy the **Application (client) ID** (always visible here,
+   not a one-time value).
+4. **Certificates & secrets → New client secret** → copy the secret **Value** immediately
+   (shown only once; if you lose it, just make a new one and delete the old).
 
 ### 2. Add the OAuth2 library in Apps Script
 
-Apps Script editor → **Libraries (+) → Add a library** → paste script ID
-`1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF` → pick the latest version →
-identifier **`OAuth2`** → Add.
+Apps Script editor → **Libraries (+) → Add a library** → paste this script ID exactly →
+pick the latest version → identifier **`OAuth2`** → Add:
+
+```
+1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF
+```
+
+> ⚠️ This is the public apps-script-oauth2 library ID (starts with `1B7F`). It is **not** your
+> own project's Script ID — don't paste your project ID here, or `OAuth2.createService` will be
+> "not a function". After adding, the Libraries list should show identifier **OAuth2** owned by
+> Google Workspace.
 
 ### 3. Script Properties
 
-Project Settings (⚙) → Script Properties → add:
+Project Settings (⚙) → **Script Properties**. They start **empty** — click **Add script
+property** and add each row manually, then **Save script properties**:
 
 | Property | Value |
 |----------|-------|
 | `MS_MODE` | `delegated` |
-| `MS_CLIENT_ID` | Application (client) ID |
+| `MS_CLIENT_ID` | Application (client) ID (from the Overview page) |
 | `MS_CLIENT_SECRET` | secret Value |
 | `MANAGER_EMAIL` | who receives the summary (for the demo, your own address is fine) |
 
-### 4. Add the code and authorize
+### 4. Add the code, register the redirect URI, authorize
 
 1. Add a new file (**+ → Script**) named `GraphMail`, paste this repo's `GraphMail.js`, save.
-2. Run **`authorizeGraph`**. Open the URL it logs (View → Logs), sign in with your
-   outlook.com account, and approve. You should see "Yetkilendirme başarılı."
-3. Run **`testGraphMail`** → check the inbox for the test message (sent from your Outlook).
-4. Run **`sendManagerDebtSummary`** → confirm the debt table arrives.
+2. **Get the exact redirect URI:** run **`showRedirectUri`**, and copy the URL it prints in the
+   log (View → Logs). It looks like
+   `https://script.google.com/macros/d/<SCRIPT_ID>/usercallback` — it must **end with
+   `/usercallback`** and have nothing after it.
+3. In Entra → your app → **Authentication → Add a platform → Web** → paste that URL **verbatim**
+   → Save. (If a wrong one is there, delete it and add the correct one.)
+4. Run **`authorizeGraph`**. Open the URL it logs, sign in with your outlook.com account, and
+   approve. You should see "Yetkilendirme başarılı."
+5. Run **`testGraphMail`** → check the inbox for the test message (sent from your Outlook).
+6. Run **`sendWeeklyEmailsGraph`** (per-employee) or **`sendManagerDebtSummary`** (one summary)
+   → confirm the mail arrives. (While data is placeholder, first set the fake rows' `E-posta`
+   to your own address — see the caution below.)
+
+### Troubleshooting (Mode A)
+
+- **`invalid_request ... redirect_uri ... not valid`** — the URI registered in Entra does not
+  exactly match what the script sends. Re-run `showRedirectUri`, and register that string
+  verbatim under Authentication. A common slip is accidentally appending the Script ID *after*
+  `/usercallback`.
+- **`OAuth2.createService is not a function`** — the OAuth2 library is missing or you added the
+  wrong Script ID (your project's instead of `1B7F...`). Remove it and re-add with the ID above.
+- **`Missing Script Property ...`** — that property isn't set; add it under Script Properties.
 
 ---
 
@@ -101,7 +128,8 @@ account — see the two-account handover in `README.md`.
 
 1. **entra.microsoft.com → App registrations → New registration** → name it →
    **Single tenant** → no redirect URI → Register.
-2. Copy **Application (client) ID** and **Directory (tenant) ID**.
+2. On the app's **Overview** page, copy **Application (client) ID** and **Directory (tenant)
+   ID** (both always visible there).
 
 ### 2. Grant Mail.Send (the one admin step)
 
