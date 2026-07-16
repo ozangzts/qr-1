@@ -94,7 +94,11 @@ reprinted.**
 
 1. **Create a dedicated Gmail** for the canteen (the future owner of everything Google).
 2. **Move the Sheet to it.** Transfer ownership (Share → make the Gmail the owner) or, if
-   that's blocked, have the Gmail do **File → Make a copy** — the bound script comes with it.
+   that's blocked, have the Gmail do **File → Make a copy**. The bound script files
+   (`Code.js` **and** `GraphMail.js`) and library references travel with it. **But Script
+   Properties and triggers do NOT copy** — with "Make a copy" you re-enter the `MS_*`
+   properties (you do this anyway in Part B) and recreate any trigger (step 9). With an
+   ownership transfer, the same project moves, so properties and triggers stay.
 3. **Re-authorize.** On the Gmail, open the Sheet → Apps Script → pick **`getData`** from the
    function dropdown → **Run** once → approve the consent screen. This only triggers Google's
    permission prompt (one run authorizes every scope the project needs); `getData` just reads
@@ -116,7 +120,9 @@ The email add-on (`GraphMail.js`) currently runs in **delegated** mode against a
    exists, so unlike the personal setup, no Azure sign-up is involved.
 8. In the Apps Script project (now owned by the dedicated Gmail), set the Script Properties to
    `MS_MODE=appOnly` with the deico tenant/client/secret, `MS_SENDER` = the deico mailbox to
-   send from, and the real recipient addresses.
+   send from, and the real recipient addresses. The demo-only pieces (the OAuth2 library, the
+   Entra redirect URI, and `authorizeGraph`) are **not used** in app-only mode — you can leave
+   or remove them.
 9. Test `sendWeeklyEmailsGraph`, then add the weekly time-driven trigger (triggers are
    per-user and do not transfer — recreate it on the Gmail).
 
