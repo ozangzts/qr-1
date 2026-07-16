@@ -91,6 +91,12 @@ Project Settings (⚙) → Script Properties → add:
 Use this on the company tenant. `@deico.com.tr` custom-domain Outlook almost certainly means
 Microsoft 365 / Exchange Online, so this mode should work there.
 
+**No credit card here.** The card was only needed in the personal demo to create a new Azure
+directory from scratch. The deico tenant already exists, so app registration in it is free and
+card-free — you just need app-registration rights and an admin to grant consent (step 2). The
+Apps Script that runs this code should be owned by the dedicated canteen Gmail, not a personal
+account — see the two-account handover in `README.md`.
+
 ### 1. Register an app (in the deico tenant)
 
 1. **entra.microsoft.com → App registrations → New registration** → name it →

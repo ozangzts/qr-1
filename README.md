@@ -72,30 +72,60 @@ ready. To enable it:
 > is on Google Workspace, no extra setup is needed. If not, a separate solution (SMTP, etc.)
 > is required. Free Gmail has a low daily send limit (~100); Workspace is higher.
 
-## Handover (moving to the company account)
+## Handover (getting it off personal accounts)
 
-The Sheet and its bound script travel together. Data (all records) is preserved; only the
-web app **URL changes, so the QR must be reprinted**. Steps:
+Right now everything sits on **personal accounts** and needs to move to accounts the company
+controls. There are **two independent halves, on two different providers** — plan for both:
 
-1. **Get the Sheet onto the company account.** Either transfer ownership (Share → make the
-   company account owner) or, if that's blocked (common between a personal Gmail and a
-   Workspace account), have the company account do **File → Make a copy** — the bound script
-   is copied too.
-2. **Re-authorize.** On the company account, open the Sheet → Apps Script → pick **`getData`**
-   from the function dropdown → click **Run** once → approve the permission prompt. The point
-   is only to trigger Google's consent screen (it lists every scope the whole project needs, so
-   one run authorizes all of them); `getData` just reads the lists and changes nothing. Do
-   **not** run `sendWeeklyEmails` for this — it actually sends the debt emails. Afterwards the
-   script runs *as* the company account (records and emails use that identity).
-3. **Deploy fresh.** Company account: **Deploy → New deployment → Web app**, *Execute as*
-   **Me**, *Who has access* as needed → copy the new URL.
-4. **Regenerate the QR** from the new URL and reprint it.
-5. **Recreate the weekly-email trigger** on the company account if it's enabled (triggers are
-   per-user and do not transfer — see above).
+| Half | Runs on | Who should own it |
+|------|---------|-------------------|
+| The app (QR form, Sheet, records) | **Google** Apps Script | a dedicated **company Gmail** |
+| Sending mail from Outlook (optional) | **Microsoft** Graph | the **deico Microsoft 365** tenant |
+
+Why a Google account at all, when the company is on Microsoft? Because the app itself runs on
+Google Apps Script. The company has no Google Workspace, so the cleanest owner is a **dedicated
+free Gmail** created just for this (e.g. `kantin.deico@gmail.com`) — a "service account" not
+tied to any one person, whose password IT keeps. If the intern leaves, the system stays.
+
+Data (all records) is preserved throughout. The web app **URL changes, so the QR must be
+reprinted.**
+
+### Part A — Google side (the app)
+
+1. **Create a dedicated Gmail** for the canteen (the future owner of everything Google).
+2. **Move the Sheet to it.** Transfer ownership (Share → make the Gmail the owner) or, if
+   that's blocked, have the Gmail do **File → Make a copy** — the bound script comes with it.
+3. **Re-authorize.** On the Gmail, open the Sheet → Apps Script → pick **`getData`** from the
+   function dropdown → **Run** once → approve the consent screen. This only triggers Google's
+   permission prompt (one run authorizes every scope the project needs); `getData` just reads
+   and changes nothing. Do **not** run `sendWeeklyEmails`/`sendWeeklyEmailsGraph` for this —
+   they actually send mail.
+4. **Deploy fresh.** **Deploy → New deployment → Web app**, *Execute as* **Me**, *Who has
+   access* as needed → copy the new URL.
+5. **Regenerate the QR** from the new URL and reprint it.
 6. **Remove the old deployment** on the personal account so nothing keeps running under it.
 
-> Note: the "last selected person" memory lives in each phone's browser (`localStorage`), so
-> it may reset once the URL changes — harmless, everyone just picks their name once more.
+### Part B — Microsoft side (Outlook email, if used)
+
+The email add-on (`GraphMail.js`) currently runs in **delegated** mode against a personal
+`outlook.com`. For production, switch it to **app-only** against the deico tenant. See
+`MICROSOFT-EMAIL.md` → "Mode B" for the exact steps. In short:
+
+7. In the **deico M365 tenant**, register an app and have an admin grant **`Mail.Send`** once
+   (this is the only step that needs IT/the manager). No credit card — the deico tenant already
+   exists, so unlike the personal setup, no Azure sign-up is involved.
+8. In the Apps Script project (now owned by the dedicated Gmail), set the Script Properties to
+   `MS_MODE=appOnly` with the deico tenant/client/secret, `MS_SENDER` = the deico mailbox to
+   send from, and the real recipient addresses.
+9. Test `sendWeeklyEmailsGraph`, then add the weekly time-driven trigger (triggers are
+   per-user and do not transfer — recreate it on the Gmail).
+
+> How the two halves connect: the Apps Script on the **Gmail** runs the code; its Script
+> Properties point at the **deico** Microsoft app, so mail is sent from the deico mailbox. Your
+> personal Google and Microsoft accounts drop out of the picture entirely.
+
+> Note: the "last selected person" memory lives in each phone's browser (`localStorage`), so it
+> may reset once the URL changes — harmless, everyone just picks their name once more.
 
 ## Extending later
 
