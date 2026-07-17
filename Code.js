@@ -143,22 +143,10 @@ function sendWeeklyEmails() {
     var g = groups[email];
     if (g.total <= 0) return;
 
-    var itemRows = g.items.map(function (it) {
-      return '<tr><td>' + it.product + '</td><td align="center">' + it.quantity +
-        '</td><td align="right">' + formatMoney(it.amount) + '</td></tr>';
-    }).join('');
-
-    var html =
-      '<p>Merhaba ' + g.name + ',</p>' +
-      '<p>Aşağıdaki ürünler için toplam borcunuz: <b>' + formatMoney(g.total) + '</b></p>' +
-      '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse">' +
-      '<tr><th>Ürün</th><th>Adet</th><th>Tutar</th></tr>' + itemRows + '</table>' +
-      '<p>İyi çalışmalar.</p>';
-
     MailApp.sendEmail({
       to: email,
-      subject: 'Kantin borcunuz: ' + formatMoney(g.total),
-      htmlBody: html
+      subject: '🥪 Minik bir kantin hatırlatması 😊',
+      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
     });
   });
 }
@@ -238,6 +226,76 @@ function createSheet(name, headers) {
 
 function formatMoney(value) {
   return (Number(value) || 0).toFixed(2) + ' ₺';
+}
+
+/**
+ * Builds the HTML body of a debt email, styled to match DEICO's email template
+ * (dark-blue header/footer, light-blue info box with an orange accent, table).
+ * Email-safe: all styles inline, table-based layout, year rendered server-side.
+ * items = [{ product, quantity, amount }], total = number.
+ */
+function debtEmailHtml_(name, items, total) {
+  var year = new Date().getFullYear();
+
+  var cellBase = 'padding:8px 10px;border-bottom:1px solid #e0e0e0;';
+  var thBase = 'padding:8px 10px;background-color:#e8f1fb;color:#555;font-weight:bold;' +
+    'border-bottom:1px solid #e0e0e0;';
+
+  var itemRows = items.map(function (it) {
+    return '<tr>' +
+      '<td style="' + cellBase + '">' + it.product + '</td>' +
+      '<td align="center" style="' + cellBase + '">' + it.quantity + '</td>' +
+      '<td align="right" style="' + cellBase + '">' + formatMoney(it.amount) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  var totalRow =
+    '<tr>' +
+    '<td colspan="2" align="right" style="padding:8px 10px;font-weight:bold;' +
+    'border-top:2px solid #004c7a;">Genel Toplam</td>' +
+    '<td align="right" style="padding:8px 10px;font-weight:bold;color:#d32f2f;' +
+    'border-top:2px solid #004c7a;">' + formatMoney(total) + '</td>' +
+    '</tr>';
+
+  return '' +
+    '<div style="background-color:#f4f4f4;padding:24px 0;margin:0;' +
+    'font-family:Calibri,Arial,Helvetica,sans-serif;color:#333333;">' +
+    '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" ' +
+    'style="background-color:#f4f4f4;">' +
+    '<tr><td align="center">' +
+    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" ' +
+    'style="width:600px;max-width:600px;background-color:#ffffff;border-radius:8px;">' +
+
+    // Header
+    '<tr><td style="background-color:#004c7a;color:#ffffff;text-align:center;' +
+    'padding:20px;font-size:20px;font-weight:bold;border-top-left-radius:8px;' +
+    'border-top-right-radius:8px;">Kantin Borç Bildirimi</td></tr>' +
+
+    // Body
+    '<tr><td style="padding:20px;">' +
+    '<div style="padding:16px 20px;background-color:#e8f1fb;border-left:5px solid #ff6f00;">' +
+    'Merhaba <b>' + name + '</b> 🥪<br><br>' +
+    'Kantindeki bazı ürünlerimiz afiyetle tüketildi, ücreti ise hâlâ bizi bekliyor 😄. ' +
+    'Yoğunluk içinde gözden kaçmış olabileceğini düşünerek küçük bir hatırlatma yapmak istedik. ' +
+    'Uygun olduğunuzda aşağıdaki <span style="color:#d32f2f;font-weight:bold;">toplam ' +
+    formatMoney(total) + '</span> tutarını ödemenizi rica ederiz 🙏.<br><br>' +
+    'Şimdiden teşekkürler, afiyet olsun! 💙' +
+    '</div>' +
+    '<table width="100%" cellpadding="0" cellspacing="0" ' +
+    'style="width:100%;border-collapse:collapse;margin-top:20px;font-size:13px;">' +
+    '<tr>' +
+    '<th align="left" style="' + thBase + '">Ürün</th>' +
+    '<th align="center" style="' + thBase + '">Adet</th>' +
+    '<th align="right" style="' + thBase + '">Tutar</th>' +
+    '</tr>' + itemRows + totalRow + '</table>' +
+    '</td></tr>' +
+
+    // Footer
+    '<tr><td style="background-color:#004c7a;color:#ffffff;text-align:center;' +
+    'padding:12px;font-size:14px;border-bottom-left-radius:8px;' +
+    'border-bottom-right-radius:8px;">© ' + year + ' DEICO Mühendislik</td></tr>' +
+
+    '</table></td></tr></table></div>';
 }
 
 /** Available if you want to use <?!= include('...') ?> inside Index.html. */
