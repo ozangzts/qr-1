@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+        body {
+            font-family: Calibri, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .header, .footer {
+            background-color: #004c7a;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px 0;
+        }
+        .header {
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        .footer {
+            padding: 10px 0;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-size: 14px;
+        }
+        .info {
+            padding: 20px;
+            background-color: #e8f1fb;
+            margin: 20px 0;
+            border-left: 5px solid #ff6f00;
+        }
+        .bold-previous {
+            font-weight: bold;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+        th {
+            padding: 6px 10px;
+            text-align: left;
+            background-color: #e8f1fb;
+            color: #555;
+            font-weight: bold;
+        }
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .new-value {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="header">
+                <h2>Satın Alma Talebi İhtiyaç Tarihi Ötelendi</h2>
+            </div>
+            <div class="info">
+                <span class="bold-previous">Sayın İlgili</span>, <br><br>
+                Aşağıda yer alan satın alma talebi için ihtiyaç tarihi ve/veya teslimat süresi tahmini olarak güncellenmiştir. <span class="bold-previous">Sipariş paylaşıldığında net teslimat süresine göre yeniden güncelleme yapılabilir. </span>
+                Detaylı bilgi için <span class="bold-previous">PURT04</span> ekranını kullanabilirsiniz.
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Alan</th>
+                            <th>Önceki Değer</th>
+                            <th>Yeni Değer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Talep No-İstek No</b></td>
+                            <td colspan="2">#INTORDERNUM# - #XREQNUM#</td>
+                        </tr>
+                        <tr>
+                            <td><b>Malzeme</b></td>
+                            <td colspan="2">#MATERIAL# - #XSTEXT#</td>
+                        </tr>
+                        <tr>
+                            <td><b>Proje</b></td>
+                            <td colspan="2">#PROJECT#</td>
+                        </tr>
+                        <tr>
+                            <td><b>Teslimat Süresi (gün)</b></td>
+                            <td>#PREVDELIVERYDAY#</td>
+                            <td class="new-value">#NEWDELIVERYDAY#</td>
+                        </tr>
+                        <tr>
+                            <td><b>İhtiyaç Tarihi/Planlanan Bitiş Tarihi</b></td>
+                            <td>#PREVREQDATE#</td>
+                            <td class="new-value">#NEWREQDATE#</td>
+                        </tr>
+
+
+                        <tr>
+                            <td><b>Güncelleyen</b></td>
+                            <td colspan="2">#USER#</td>
+                        </tr>
+                        <tr>
+                            <td><b>Güncelleme Tarihi</b></td>
+                            <td colspan="2">#DATE#</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="footer">
+                © <span id="currentYear"></span> DEICO Mühendislik
+            </div>
+            <script>
+                document.getElementById("currentYear").textContent = new Date().getFullYear();
+            </script>
+        </div>
+    </body>
+</html>
