@@ -182,6 +182,7 @@ function setup() {
   if (employees.getLastRow() < 2) {
     employees.getRange(2, 1, SAMPLE_EMPLOYEES.length, 2).setValues(SAMPLE_EMPLOYEES);
   }
+  applyEmployeeEmailValidation_(employees);
 
   var products = createSheet(SHEET_PRODUCTS, HEADERS_PRODUCTS);
   if (products.getLastRow() < 2) {
@@ -223,6 +224,21 @@ function getSheet(name) {
     throw new Error('"' + name + '" sayfası yok. Önce Kurulum menüsünü çalıştırın.');
   }
   return sheet;
+}
+
+/**
+ * Forces the employee E-posta column to be unique via a sheet data-validation rule,
+ * so a duplicate email is rejected on entry. Blank is allowed (email is optional).
+ * Applied to the whole column, so it covers rows added later too.
+ */
+function applyEmployeeEmailValidation_(sheet) {
+  var range = sheet.getRange(2, 2, sheet.getMaxRows() - 1, 1); // E-posta column, from row 2
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireFormulaSatisfied('=OR($B2="", COUNTIF($B$2:$B, $B2)=1)')
+    .setAllowInvalid(false)
+    .setHelpText('Bu e-posta zaten listede var. E-posta adresleri benzersiz olmalı.')
+    .build();
+  range.setDataValidation(rule);
 }
 
 function createSheet(name, headers) {
