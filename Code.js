@@ -195,7 +195,13 @@ function setup() {
   var blank = ss.getSheetByName('Sayfa1') || ss.getSheetByName('Sheet1');
   if (blank && ss.getSheets().length > 1) ss.deleteSheet(blank);
 
-  SpreadsheetApp.getUi().alert('Kurulum tamam. Sayfalar hazır, örnek veriler eklendi.');
+  // The alert is a nicety for the menu path; getUi() has no UI context when setup
+  // is run straight from the editor, so don't let that fail the whole setup.
+  try {
+    SpreadsheetApp.getUi().alert('Kurulum tamam. Sayfalar hazır, örnek veriler eklendi.');
+  } catch (e) {
+    Logger.log('Kurulum tamam (alert atlandı: UI bağlamı yok).');
+  }
 }
 
 // Sample (placeholder) employee list - replace via the Çalışanlar sheet once the real list arrives.
@@ -232,9 +238,13 @@ function getSheet(name) {
  * Applied to the whole column, so it covers rows added later too.
  */
 function applyEmployeeEmailValidation_(sheet) {
-  var range = sheet.getRange(2, 2, sheet.getMaxRows() - 1, 1); // E-posta column, from row 2
+  var lastRow = sheet.getMaxRows();
+  var range = sheet.getRange(2, 2, lastRow - 1, 1); // E-posta column, from row 2
+  // Turkish-locale sheets use ';' as the formula argument separator, not ','.
+  // Bounded range (not open-ended $B$2:$B) — Apps Script rejects open-ended refs here.
+  var formula = '=OR($B2=""; COUNTIF($B$2:$B$' + lastRow + '; $B2)=1)';
   var rule = SpreadsheetApp.newDataValidation()
-    .requireFormulaSatisfied('=OR($B2="", COUNTIF($B$2:$B, $B2)=1)')
+    .requireFormulaSatisfied(formula)
     .setAllowInvalid(false)
     .setHelpText('Bu e-posta zaten listede var. E-posta adresleri benzersiz olmalı.')
     .build();
