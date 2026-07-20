@@ -86,7 +86,6 @@ function saveOrder(order) {
   var prices = {};
   getProducts().forEach(function (p) { prices[p.name] = p.price; });
 
-  var sheet = getSheet(SHEET_RECORDS);
   var now = new Date();
   var total = 0;
   var rows = items.map(function (it) {
@@ -97,11 +96,24 @@ function saveOrder(order) {
     return [now, order.name, order.email || '', it.product, quantity, unitPrice, amount, false];
   });
 
-  var startRow = sheet.getLastRow() + 1;
-  sheet.getRange(startRow, 1, rows.length, HEADERS_RECORDS.length).setValues(rows);
-  // Render the "Odendi" (paid) flag as a checkbox on just these new rows, so the
-  // column stays tidy (no stray checkboxes/values on empty rows below the data).
-  sheet.getRange(startRow, 8, rows.length, 1).insertCheckboxes();
+  // Serialize the append: two simultaneous submissions could otherwise read the
+  // same getLastRow() and write to the same start row, overwriting each other.
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+  } catch (e) {
+    throw new Error('Sistem şu an meşgul, lütfen birkaç saniye sonra tekrar deneyin.');
+  }
+  try {
+    var sheet = getSheet(SHEET_RECORDS);
+    var startRow = sheet.getLastRow() + 1;
+    sheet.getRange(startRow, 1, rows.length, HEADERS_RECORDS.length).setValues(rows);
+    // Render the "Odendi" (paid) flag as a checkbox on just these new rows, so the
+    // column stays tidy (no stray checkboxes/values on empty rows below the data).
+    sheet.getRange(startRow, 8, rows.length, 1).insertCheckboxes();
+  } finally {
+    lock.releaseLock();
+  }
 
   return { ok: true, total: total };
 }
@@ -228,6 +240,11 @@ function formatMoney(value) {
   return (Number(value) || 0).toFixed(2) + ' ₺';
 }
 
+/** Escapes text before it is placed into HTML (names/products from the sheet). */
+function escapeHtml_(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /**
  * Builds the HTML body of a debt email, styled to match DEICO's email template
  * (dark-blue header/footer, light-blue info box with an orange accent, table).
@@ -243,7 +260,7 @@ function debtEmailHtml_(name, items, total) {
 
   var itemRows = items.map(function (it) {
     return '<tr>' +
-      '<td style="' + cellBase + '">' + it.product + '</td>' +
+      '<td style="' + cellBase + '">' + escapeHtml_(it.product) + '</td>' +
       '<td align="center" style="' + cellBase + '">' + it.quantity + '</td>' +
       '<td align="right" style="' + cellBase + '">' + formatMoney(it.amount) + '</td>' +
       '</tr>';
@@ -274,7 +291,7 @@ function debtEmailHtml_(name, items, total) {
     // Body
     '<tr><td style="padding:20px;">' +
     '<div style="padding:16px 20px;background-color:#e8f1fb;border-left:5px solid #ff6f00;">' +
-    'Merhaba <b>' + name + '</b> 🥪<br><br>' +
+    'Merhaba <b>' + escapeHtml_(name) + '</b> 🥪<br><br>' +
     'Kantindeki bazı ürünlerimiz afiyetle tüketildi, ücreti ise hâlâ bizi bekliyor 😄. ' +
     'Yoğunluk içinde gözden kaçmış olabileceğini düşünerek küçük bir hatırlatma yapmak istedik. ' +
     'Uygun olduğunuzda aşağıdaki <span style="color:#d32f2f;font-weight:bold;">toplam ' +

@@ -183,23 +183,23 @@
       // Products
       PRODUCTS = data.products;
       var box = document.getElementById('products');
-      PRODUCTS.forEach(function (p) {
+      PRODUCTS.forEach(function (p, i) {
         quantities[p.name] = 0;
         var row = document.createElement('div');
         row.className = 'product';
         row.innerHTML =
           '<div>' +
-            '<div class="product-name">' + p.name + '</div>' +
+            '<div class="product-name">' + escapeHtml(p.name) + '</div>' +
             '<div class="product-price">' + p.price.toFixed(2) + ' ₺</div>' +
           '</div>' +
           '<div class="qty">' +
             '<button type="button" aria-label="azalt">−</button>' +
-            '<span class="val" id="val-' + slug(p.name) + '">0</span>' +
+            '<span class="val" id="val-' + i + '">0</span>' +
             '<button type="button" aria-label="arttır">+</button>' +
           '</div>';
         var btns = row.querySelectorAll('button');
-        btns[0].onclick = function () { change(p.name, -1); };
-        btns[1].onclick = function () { change(p.name, 1); };
+        btns[0].onclick = function () { change(i, -1); };
+        btns[1].onclick = function () { change(i, 1); };
         box.appendChild(row);
       });
 
@@ -215,9 +215,10 @@
       document.getElementById('confirmBack').onclick = hideConfirm;
     }
 
-    function change(product, delta) {
-      quantities[product] = Math.max(0, (quantities[product] || 0) + delta);
-      document.getElementById('val-' + slug(product)).textContent = quantities[product];
+    function change(index, delta) {
+      var name = PRODUCTS[index].name;
+      quantities[name] = Math.max(0, (quantities[name] || 0) + delta);
+      document.getElementById('val-' + index).textContent = quantities[name];
       calculate();
       refresh();
     }
@@ -248,7 +249,7 @@
         total += amount;
         var row = document.createElement('div');
         row.className = 'c-item';
-        row.innerHTML = '<span>' + p.name + ' <span class="q">× ' + q + '</span></span>' +
+        row.innerHTML = '<span>' + escapeHtml(p.name) + ' <span class="q">× ' + q + '</span></span>' +
           '<span>' + amount.toFixed(2) + ' ₺</span>';
         box.appendChild(row);
       });
@@ -304,9 +305,9 @@
       hideConfirm();
       // Keep the same person selected (they usually pay for themselves again).
       document.getElementById('employee').value = safeGet(LAST_EMP_KEY) || '';
-      PRODUCTS.forEach(function (p) {
+      PRODUCTS.forEach(function (p, i) {
         quantities[p.name] = 0;
-        document.getElementById('val-' + slug(p.name)).textContent = '0';
+        document.getElementById('val-' + i).textContent = '0';
       });
       calculate();
       refresh();
@@ -322,7 +323,9 @@
       el.textContent = text;
     }
 
-    function slug(s) { return s.replace(/[^a-zA-Z0-9]/g, '_'); }
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
     function selectByValue(sel, value) {
       for (var i = 0; i < sel.options.length; i++) {
