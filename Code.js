@@ -133,8 +133,9 @@ function sendWeeklyEmails() {
   var rows = sheet.getDataRange().getValues();
   if (rows.length < 2) return;
 
-  // Group unpaid rows by email.
-  var groups = {}; // email -> { name, items: [], total }
+  // Group unpaid rows by email; within each person, merge repeats of the same
+  // product (bought on different days) into one line so the email isn't cluttered.
+  var groups = {}; // email -> { name, items: {product -> {product, quantity, amount}}, total }
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     var paid = row[7] === true || String(row[7]).toUpperCase() === 'TRUE';
@@ -144,10 +145,15 @@ function sendWeeklyEmails() {
     if (!email) continue;
 
     if (!groups[email]) {
-      groups[email] = { name: String(row[1]).trim(), items: [], total: 0 };
+      groups[email] = { name: String(row[1]).trim(), items: {}, total: 0 };
     }
     var g = groups[email];
-    g.items.push({ product: row[3], quantity: Number(row[4]), amount: Number(row[6]) });
+    var product = String(row[3]);
+    if (!g.items[product]) {
+      g.items[product] = { product: product, quantity: 0, amount: 0 };
+    }
+    g.items[product].quantity += Number(row[4]) || 0;
+    g.items[product].amount += Number(row[6]) || 0;
     g.total += Number(row[6]) || 0;
   }
 
@@ -155,10 +161,13 @@ function sendWeeklyEmails() {
     var g = groups[email];
     if (g.total <= 0) return;
 
+    var items = Object.keys(g.items).map(function (p) { return g.items[p]; });
+    items.sort(function (a, b) { return a.product.localeCompare(b.product, 'tr'); });
+
     MailApp.sendEmail({
       to: email,
       subject: '🥪 Minik bir kantin hatırlatması 😊',
-      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
+      htmlBody: debtEmailHtml_(g.name, items, g.total)
     });
   });
 }
