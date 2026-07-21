@@ -32,6 +32,10 @@
       border: 1px solid var(--line); border-radius: 10px; background: var(--card);
       appearance: none; -webkit-appearance: none;
     }
+    #guestName {
+      width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;
+      border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+    }
     .card {
       background: var(--card); border: 1px solid var(--line);
       border-radius: 14px; padding: 16px; margin-bottom: 16px;
@@ -122,6 +126,7 @@
       <div class="card">
         <label for="employee">İsim</label>
         <select id="employee"><option value="">— Seçin —</option></select>
+        <input id="guestName" type="text" placeholder="Misafir adı soyadı" style="display:none">
       </div>
 
       <div class="card">
@@ -165,6 +170,7 @@
     var PRODUCTS = [];
     var quantities = {}; // product name -> quantity
     var LAST_EMP_KEY = 'kantin_last_email'; // per-device memory of the last selected person (by unique email)
+    var GUEST_VALUE = '__GUEST__';          // sentinel <option> value for the MİSAFİR (guest) entry
 
     // Footer year, kept current automatically.
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -180,6 +186,14 @@
       // Employees. Names can repeat, so the option's VALUE is the unique email.
       // The email is shown as a hint only when a name appears more than once.
       var sel = document.getElementById('employee');
+
+      // Guest entry, always at the top of the list. Picking it reveals a name box;
+      // guests have no email, so reminders never go to them (manager settles manually).
+      var guestOpt = document.createElement('option');
+      guestOpt.value = GUEST_VALUE;
+      guestOpt.textContent = 'MİSAFİR';
+      sel.appendChild(guestOpt);
+
       var nameCounts = {};
       data.employees.forEach(function (c) { nameCounts[c.name] = (nameCounts[c.name] || 0) + 1; });
       data.employees.forEach(function (c) {
@@ -217,13 +231,36 @@
       // Pre-select the last person used on THIS device (matched by unique email).
       var lastEmail = safeGet(LAST_EMP_KEY);
       if (lastEmail) selectByValue(sel, lastEmail);
+      toggleGuest();
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('form').style.display = 'block';
-      sel.onchange = refresh;
+      sel.onchange = function () { toggleGuest(); refresh(); };
+      document.getElementById('guestName').oninput = refresh;
       document.getElementById('save').onclick = showConfirm;
       document.getElementById('confirmYes').onclick = performSave;
       document.getElementById('confirmBack').onclick = hideConfirm;
+    }
+
+    // Shows/hides the guest name box depending on whether MİSAFİR is selected.
+    function toggleGuest() {
+      var sel = document.getElementById('employee');
+      var opt = sel.options[sel.selectedIndex];
+      var isGuest = !!opt && opt.value === GUEST_VALUE;
+      var input = document.getElementById('guestName');
+      input.style.display = isGuest ? 'block' : 'none';
+      if (!isGuest) input.value = '';
+    }
+
+    // The effective { name, email } for the current selection (guest -> typed name, no email).
+    function currentPerson() {
+      var sel = document.getElementById('employee');
+      var opt = sel.options[sel.selectedIndex];
+      if (!opt) return { name: '', email: '' };
+      if (opt.value === GUEST_VALUE) {
+        return { name: document.getElementById('guestName').value.trim(), email: '' };
+      }
+      return { name: opt.dataset.name || '', email: opt.dataset.email || '' };
     }
 
     function change(index, delta) {
@@ -242,7 +279,7 @@
     }
 
     function refresh() {
-      var hasName = !!document.getElementById('employee').value;
+      var hasName = !!currentPerson().name; // guest counts only once a name is typed
       var hasProduct = PRODUCTS.some(function (p) { return quantities[p.name] > 0; });
       document.getElementById('save').disabled = !(hasName && hasProduct);
     }
@@ -264,8 +301,7 @@
           '<span>' + amount.toFixed(2) + ' ₺</span>';
         box.appendChild(row);
       });
-      var opt = sel.options[sel.selectedIndex];
-      document.getElementById('confirmName').textContent = opt ? opt.dataset.name : '';
+      document.getElementById('confirmName').textContent = currentPerson().name;
       document.getElementById('confirmTotal').textContent = total.toFixed(2) + ' ₺';
       document.getElementById('confirmMessage').innerHTML = '';
       document.getElementById('confirm').style.display = 'flex';
@@ -278,7 +314,7 @@
     // Step 2: user confirmed -> actually write to the backend.
     function performSave() {
       var sel = document.getElementById('employee');
-      var opt = sel.options[sel.selectedIndex];
+      var person = currentPerson();
       var items = PRODUCTS
         .filter(function (p) { return quantities[p.name] > 0; })
         .map(function (p) { return { product: p.name, quantity: quantities[p.name] }; });
@@ -289,7 +325,7 @@
 
       google.script.run
         .withSuccessHandler(function (result) {
-          safeSet(LAST_EMP_KEY, sel.value); // remember this person (by email) on this device
+          if (sel.value !== GUEST_VALUE) safeSet(LAST_EMP_KEY, sel.value); // don't remember guests
           hideConfirm();
           document.getElementById('form').style.display = 'none';
           document.getElementById('done').style.display = 'block';
@@ -306,8 +342,8 @@
           btn.textContent = 'Evet, kaydet';
         })
         .saveOrder({
-          name: opt ? opt.dataset.name : '',
-          email: opt ? (opt.dataset.email || '') : '',
+          name: person.name,
+          email: person.email,
           items: items
         });
     }
@@ -316,6 +352,7 @@
       hideConfirm();
       // Keep the same person selected (they usually pay for themselves again).
       document.getElementById('employee').value = safeGet(LAST_EMP_KEY) || '';
+      toggleGuest();
       PRODUCTS.forEach(function (p, i) {
         quantities[p.name] = 0;
         document.getElementById('val-' + i).textContent = '0';
