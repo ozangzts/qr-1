@@ -87,9 +87,26 @@ Tab names and headers are defined by the constants at the top of `Code.js`
 
 - The HTML file must be named exactly **`Index`** in Apps Script; `doGet` calls
   `createTemplateFromFile('Index')`.
-- After editing code you must publish a **new deployment** (or update the existing one);
-  saving alone does not update the live URL.
+- Redeploy is only needed for **form-facing** changes (`doGet`, `Index.html`, and the
+  functions the page calls via `google.script.run`: `getData`, `saveOrder`). Editor/trigger
+  functions (setup, the reminder emails) run the latest saved code — **no redeploy** for those.
 - The sample employee/product data (`SAMPLE_*`) is placeholder. The real lists are managed
   from the Sheet; re-running setup will not overwrite a tab that already has data.
-- Whether deico.com.tr is on Google Workspace is not yet confirmed, so the weekly-email
-  **trigger is not set up** (the function is ready but off).
+- `setup()` applies a data-validation rule (unique email) and calls `getUi()` in a try/catch;
+  the validation formula uses **`;`** separators because the sheet locale is Turkish.
+
+## Email reminders (important)
+
+- deico uses **Outlook/Microsoft**, but email goes out via **Gmail** (`MailApp`) from a
+  company-provided Google account. The Outlook/Graph path (`GraphMail.js`, `MICROSOFT-EMAIL.md`)
+  is **parked** — the Entra team wouldn't add the account. See the memory note if reviving it.
+- Free Gmail caps at **~100 recipients/day**, and the site has **~200+ employees**. So
+  `sendDailyReminders` (the daily-trigger target) mails only the debtors whose email hashes to
+  today's weekday bucket (`emailBucket_(email, 5)` → Mon–Fri): each person is reminded once a
+  week, no day exceeds the quota. It is **stateless** — a person's day is derived from their
+  email, so there's no tracking to corrupt, no double-send; a missed run just waits a week.
+- `sendAllRemindersNow` mails everyone in one run (manual backup; can exceed the 100/day cap).
+  `logReminderPlan` logs the per-weekday counts to verify the split. `sendReminder_` wraps each
+  send in try/catch so one bad address never aborts the batch.
+- The daily trigger needs the project **time zone set to Europe/Istanbul** so "morning" and the
+  weekday are local. Don't change the bucket count (5) casually — it shifts everyone's day.

@@ -190,6 +190,22 @@ function emailBucket_(email, buckets) {
 }
 
 /**
+ * Sends one person's reminder. Wrapped in try/catch so a single bad address (or
+ * transient error) is logged and skipped instead of aborting the whole batch.
+ */
+function sendReminder_(g) {
+  try {
+    MailApp.sendEmail({
+      to: g.email,
+      subject: REMINDER_SUBJECT,
+      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
+    });
+  } catch (e) {
+    Logger.log('Mail gönderilemedi (' + g.email + '): ' + e);
+  }
+}
+
+/**
  * Daily trigger target: on weekday mornings, emails only the debtors whose email
  * falls in today's bucket (~1/5 of them), so everyone is reminded once a week and
  * the 100/day Gmail limit is never hit. Weekends are skipped.
@@ -202,23 +218,13 @@ function sendDailyReminders() {
   unpaidDebtByPerson_().forEach(function (g) {
     if (emailBucket_(g.email, 5) !== todayBucket) return; // not this person's day
     if (MailApp.getRemainingDailyQuota() < 1) return;     // quota gone; caught next week
-    MailApp.sendEmail({
-      to: g.email,
-      subject: REMINDER_SUBJECT,
-      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
-    });
+    sendReminder_(g);
   });
 }
 
 /** Manual "mail every unpaid person now" (backup). Mind the 100/day Gmail limit. */
 function sendAllRemindersNow() {
-  unpaidDebtByPerson_().forEach(function (g) {
-    MailApp.sendEmail({
-      to: g.email,
-      subject: REMINDER_SUBJECT,
-      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
-    });
-  });
+  unpaidDebtByPerson_().forEach(function (g) { sendReminder_(g); });
 }
 
 /**
