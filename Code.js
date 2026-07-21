@@ -141,6 +141,11 @@ function saveOrder(order) {
 
 var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 
+// Don't remind about debt younger than this many days — avoid nagging someone who
+// just bought something. A person is reminded only once their OLDEST unpaid item
+// passes this age.
+var REMINDER_GRACE_DAYS = 7;
+
 /**
  * Unpaid debt per person: [{ email, name, items:[{product,quantity,amount}], total }].
  * Repeats of the same product (bought on different days) are merged into one line.
@@ -159,7 +164,7 @@ function unpaidDebtByPerson_() {
     if (!email) continue;
 
     if (!groups[email]) {
-      groups[email] = { name: String(row[1]).trim(), items: {}, total: 0 };
+      groups[email] = { name: String(row[1]).trim(), items: {}, total: 0, oldest: null };
     }
     var g = groups[email];
     var product = String(row[3]);
@@ -169,13 +174,18 @@ function unpaidDebtByPerson_() {
     g.items[product].quantity += Number(row[4]) || 0;
     g.items[product].amount += Number(row[6]) || 0;
     g.total += Number(row[6]) || 0;
+
+    // Oldest unpaid timestamp (Zaman, col 0) drives the grace period.
+    var ts = (row[0] instanceof Date) ? row[0].getTime() : Date.parse(row[0]);
+    if (isNaN(ts)) ts = 0; // missing/invalid timestamp -> treat as old (include)
+    if (g.oldest === null || ts < g.oldest) g.oldest = ts;
   }
 
   return Object.keys(groups).map(function (email) {
     var g = groups[email];
     var items = Object.keys(g.items).map(function (p) { return g.items[p]; });
     items.sort(function (a, b) { return a.product.localeCompare(b.product, 'tr'); });
-    return { email: email, name: g.name, items: items, total: g.total };
+    return { email: email, name: g.name, items: items, total: g.total, oldest: g.oldest };
   }).filter(function (g) { return g.total > 0; });
 }
 
@@ -187,6 +197,12 @@ function emailBucket_(email, buckets) {
     h = (h * 31 + s.charCodeAt(i)) % 100000007;
   }
   return h % buckets;
+}
+
+/** True once the person's oldest unpaid item is older than REMINDER_GRACE_DAYS. */
+function isDueForReminder_(g) {
+  if (g.oldest === null) return false;
+  return (new Date().getTime() - g.oldest) >= REMINDER_GRACE_DAYS * 24 * 60 * 60 * 1000;
 }
 
 /**
@@ -217,14 +233,18 @@ function sendDailyReminders() {
 
   unpaidDebtByPerson_().forEach(function (g) {
     if (emailBucket_(g.email, 5) !== todayBucket) return; // not this person's day
+    if (!isDueForReminder_(g)) return;                    // still within the grace period
     if (MailApp.getRemainingDailyQuota() < 1) return;     // quota gone; caught next week
     sendReminder_(g);
   });
 }
 
-/** Manual "mail every unpaid person now" (backup). Mind the 100/day Gmail limit. */
+/** Manual "mail every due unpaid person now" (backup). Mind the 100/day Gmail limit. */
 function sendAllRemindersNow() {
-  unpaidDebtByPerson_().forEach(function (g) { sendReminder_(g); });
+  unpaidDebtByPerson_().forEach(function (g) {
+    if (!isDueForReminder_(g)) return; // skip debt still within the grace period
+    sendReminder_(g);
+  });
 }
 
 /**
@@ -235,7 +255,9 @@ function sendAllRemindersNow() {
 function logReminderPlan() {
   var days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
   var counts = [0, 0, 0, 0, 0];
+  var fresh = 0;
   unpaidDebtByPerson_().forEach(function (g) {
+    if (!isDueForReminder_(g)) { fresh++; return; } // within grace period, not yet reminded
     counts[emailBucket_(g.email, 5)]++;
   });
   var total = 0;
@@ -243,7 +265,8 @@ function logReminderPlan() {
     total += counts[i];
     Logger.log(days[i] + ': ' + counts[i] + ' kişi');
   }
-  Logger.log('Toplam borçlu: ' + total);
+  Logger.log('Hatırlatılacak toplam: ' + total);
+  Logger.log('Süresi dolmamış (atlanan): ' + fresh);
 }
 
 /* ----------------------------------------------------------------------------
