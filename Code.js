@@ -119,22 +119,36 @@ function saveOrder(order) {
 }
 
 /* ----------------------------------------------------------------------------
- * Weekly email (currently OFF - a trigger is added once Workspace is confirmed)
+ * Debt reminder emails. Only rows where "Ödendi" (paid) is FALSE count as debt.
+ * Email text is Turkish on purpose (the employee reads it).
  *
- * To enable:
- *   1) Apps Script > Triggers (clock icon) > Add trigger
- *   2) Function: sendWeeklyEmails, Event source: Time-driven > Week timer
- * Only rows where "Odendi" (paid) is FALSE count as debt.
- * The email body is Turkish on purpose - the employee reads it.
+ * At ~200+ people, free Gmail's 100-recipient/day limit means we can't mail
+ * everyone in one run. sendDailyReminders spreads debtors across the 5 weekdays
+ * by a hash of their email, so each person gets ONE reminder per week and no
+ * single day exceeds the quota. It is stateless (a person's day is derived from
+ * their email), so there is nothing to track/corrupt and no risk of daily spam:
+ * a failed run just misses that week (they get it the next), never over-sends.
+ *
+ * To enable (recommended):
+ *   Triggers (clock icon) > Add trigger > function: sendDailyReminders,
+ *   Time-driven > Day timer > a morning hour (e.g. 8am-9am).
+ *   Also set Project Settings > Time zone to Europe/Istanbul so "morning" and the
+ *   weekday are evaluated in local time.
+ *
+ * sendAllRemindersNow stays as a manual "mail everyone now" (mind the 100/day limit).
+ * logReminderPlan logs how many debtors fall on each weekday, to check the split.
  * -------------------------------------------------------------------------- */
 
-function sendWeeklyEmails() {
+var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
+
+/**
+ * Unpaid debt per person: [{ email, name, items:[{product,quantity,amount}], total }].
+ * Repeats of the same product (bought on different days) are merged into one line.
+ */
+function unpaidDebtByPerson_() {
   var sheet = getSheet(SHEET_RECORDS);
   var rows = sheet.getDataRange().getValues();
-  if (rows.length < 2) return;
 
-  // Group unpaid rows by email; within each person, merge repeats of the same
-  // product (bought on different days) into one line so the email isn't cluttered.
   var groups = {}; // email -> { name, items: {product -> {product, quantity, amount}}, total }
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
@@ -157,19 +171,73 @@ function sendWeeklyEmails() {
     g.total += Number(row[6]) || 0;
   }
 
-  Object.keys(groups).forEach(function (email) {
+  return Object.keys(groups).map(function (email) {
     var g = groups[email];
-    if (g.total <= 0) return;
-
     var items = Object.keys(g.items).map(function (p) { return g.items[p]; });
     items.sort(function (a, b) { return a.product.localeCompare(b.product, 'tr'); });
+    return { email: email, name: g.name, items: items, total: g.total };
+  }).filter(function (g) { return g.total > 0; });
+}
 
+/** Stable 0..(buckets-1) bucket derived from the email (case-insensitive). */
+function emailBucket_(email, buckets) {
+  var s = String(email).toLowerCase();
+  var h = 0;
+  for (var i = 0; i < s.length; i++) {
+    h = (h * 31 + s.charCodeAt(i)) % 100000007;
+  }
+  return h % buckets;
+}
+
+/**
+ * Daily trigger target: on weekday mornings, emails only the debtors whose email
+ * falls in today's bucket (~1/5 of them), so everyone is reminded once a week and
+ * the 100/day Gmail limit is never hit. Weekends are skipped.
+ */
+function sendDailyReminders() {
+  var day = new Date().getDay(); // 0=Sun ... 6=Sat (project time zone)
+  if (day === 0 || day === 6) return; // weekend: nothing to do
+  var todayBucket = day - 1;          // Mon->0, Tue->1, ... Fri->4
+
+  unpaidDebtByPerson_().forEach(function (g) {
+    if (emailBucket_(g.email, 5) !== todayBucket) return; // not this person's day
+    if (MailApp.getRemainingDailyQuota() < 1) return;     // quota gone; caught next week
     MailApp.sendEmail({
-      to: email,
-      subject: '🥪 Minik bir kantin hatırlatması 😊',
-      htmlBody: debtEmailHtml_(g.name, items, g.total)
+      to: g.email,
+      subject: REMINDER_SUBJECT,
+      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
     });
   });
+}
+
+/** Manual "mail every unpaid person now" (backup). Mind the 100/day Gmail limit. */
+function sendAllRemindersNow() {
+  unpaidDebtByPerson_().forEach(function (g) {
+    MailApp.sendEmail({
+      to: g.email,
+      subject: REMINDER_SUBJECT,
+      htmlBody: debtEmailHtml_(g.name, g.items, g.total)
+    });
+  });
+}
+
+/**
+ * Diagnostic: logs how many debtors fall on each weekday bucket, so you can
+ * confirm the split is balanced and safely under the 100/day limit before you
+ * trust the daily trigger. Run from the editor and check View > Logs.
+ */
+function logReminderPlan() {
+  var days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
+  var counts = [0, 0, 0, 0, 0];
+  unpaidDebtByPerson_().forEach(function (g) {
+    counts[emailBucket_(g.email, 5)]++;
+  });
+  var total = 0;
+  for (var i = 0; i < 5; i++) {
+    total += counts[i];
+    Logger.log(days[i] + ': ' + counts[i] + ' kişi');
+  }
+  Logger.log('Toplam borçlu: ' + total);
 }
 
 /* ----------------------------------------------------------------------------

@@ -59,18 +59,30 @@ Each record lands in the `Kayıtlar` tab as **one row per product**:
 When a debt is settled, set the **`Ödendi`** cell of the relevant rows to `TRUE` (checked);
 the weekly email counts only rows where `Ödendi = FALSE` as debt.
 
-## Weekly email (currently off)
+## Debt reminder emails (currently off)
 
-It gets turned on once the email account is settled. The function (`sendWeeklyEmails`) is
-ready. To enable it:
+Reminders are sent from the Google account that runs the script (Gmail). With ~200+ people,
+free Gmail's ~100-recipient/day limit means everyone can't be emailed at once, so
+**`sendDailyReminders`** spreads debtors across the five weekdays by a hash of their email:
+each person gets one reminder on their weekday morning, and no single day exceeds the limit.
+It is **stateless** (a person's day comes from their email), so no one is ever double-reminded;
+a missed run just waits for next week — it never over-sends.
 
-1. Apps Script editor → left menu **Triggers** (⏰ clock icon) → **Add trigger**.
-2. Function: **`sendWeeklyEmails`**, event source: **Time-driven** →
-   **Week timer** → pick day/time → Save.
+To enable:
 
-> Note: the email is sent from the Google account that runs the script. If the company email
-> is on Google Workspace, no extra setup is needed. If not, a separate solution (SMTP, etc.)
-> is required. Free Gmail has a low daily send limit (~100); Workspace is higher.
+1. Apps Script editor → left menu **Triggers** (⏰) → **Add trigger**.
+2. Function: **`sendDailyReminders`**, event source: **Time-driven → Day timer → 8am–9am**.
+3. Set **Project Settings → Time zone → Europe/Istanbul** so "morning" and the weekday are
+   evaluated in local time.
+
+Helpers: **`logReminderPlan`** logs how many debtors fall on each weekday (run it to confirm
+the split is balanced and under the limit). **`sendAllRemindersNow`** mails every unpaid
+person in one run — a manual backup; mind the ~100/day limit. Only rows where `Ödendi` is
+FALSE count as debt.
+
+> Note: for a much higher send limit you'd need Google Workspace (~1,500/day) or the parked
+> Outlook/Graph path (`MICROSOFT-EMAIL.md`). The weekday split keeps free Gmail workable up to
+> roughly 450 people.
 
 ## Handover (getting it off personal accounts)
 
@@ -102,8 +114,8 @@ reprinted.**
 3. **Re-authorize.** On the Gmail, open the Sheet → Apps Script → pick **`getData`** from the
    function dropdown → **Run** once → approve the consent screen. This only triggers Google's
    permission prompt (one run authorizes every scope the project needs); `getData` just reads
-   and changes nothing. Do **not** run `sendWeeklyEmails`/`sendWeeklyEmailsGraph` for this —
-   they actually send mail.
+   and changes nothing. Do **not** run the reminder senders (`sendDailyReminders`,
+   `sendAllRemindersNow`) for this — they actually send mail.
 4. **Deploy fresh.** **Deploy → New deployment → Web app**, *Execute as* **Me**, *Who has
    access* as needed → copy the new URL.
 5. **Regenerate the QR** from the new URL and reprint it.

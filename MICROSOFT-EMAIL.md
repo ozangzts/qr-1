@@ -1,7 +1,7 @@
 # Sending mail from Outlook (Microsoft Graph)
 
 > **Status: parked (not in use).** The company's Entra team would not add our account, so this
-> Graph path is on hold. Email currently goes through Gmail via `sendWeeklyEmails` in `Code.js`
+> Graph path is on hold. Email currently goes through Gmail via `sendDailyReminders` in `Code.js`
 > (sent from a company-provided Gmail). These notes are kept for if the Entra situation changes
 > later — the delegated flow was verified working on a personal outlook.com before parking.
 
