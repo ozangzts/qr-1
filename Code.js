@@ -257,7 +257,34 @@ function onOpen() {
     .addToUi();
   ui.createMenu('Kantin')
     .addItem('Bir kişinin borcunu ödendi yap', 'markPersonPaid')
+    .addItem('E-posta tekrarlarını kontrol et', 'checkDuplicateEmails')
     .addToUi();
+}
+
+/**
+ * Manager helper (Kantin menu): scans the employee list for duplicate emails and
+ * lists any it finds. The data-validation rule blocks duplicates on manual entry,
+ * but a bulk paste can slip past it — run this after importing a list to be sure.
+ */
+function checkDuplicateEmails() {
+  var ui = SpreadsheetApp.getUi();
+  var rows = getSheet(SHEET_EMPLOYEES).getDataRange().getValues();
+
+  var counts = {}; // email -> count
+  for (var i = 1; i < rows.length; i++) {
+    var email = String(rows[i][1]).trim().toLowerCase();
+    if (!email) continue;
+    counts[email] = (counts[email] || 0) + 1;
+  }
+
+  var dups = Object.keys(counts).filter(function (e) { return counts[e] > 1; });
+  if (dups.length === 0) {
+    ui.alert('Tekrarlanan e-posta yok. ✓');
+    return;
+  }
+
+  var msg = dups.map(function (e) { return e + ' — ' + counts[e] + ' kez'; }).join('\n');
+  ui.alert('Tekrarlanan e-posta(lar):\n\n' + msg + '\n\nLütfen bunları düzeltin.');
 }
 
 /**
