@@ -100,11 +100,12 @@ Tab names and headers are defined by the constants at the top of `Code.js`
 - deico uses **Outlook/Microsoft**, but email goes out via **Gmail** (`MailApp`) from a
   company-provided Google account. The Outlook/Graph path (`GraphMail.js`, `MICROSOFT-EMAIL.md`)
   is **parked** — the Entra team wouldn't add the account. See the memory note if reviving it.
-- Free Gmail caps at **~100 recipients/day**, and the site has **~200+ employees**. So
-  `sendDailyReminders` (the daily-trigger target) mails only the debtors whose email hashes to
-  today's weekday bucket (`emailBucket_(email, 5)` → Mon–Fri): each person is reminded once a
-  week, no day exceeds the quota. It is **stateless** — a person's day is derived from their
-  email, so there's no tracking to corrupt, no double-send; a missed run just waits a week.
+- Free Gmail caps at **~100 recipients/day**. So `sendDailyReminders` (the daily-trigger target)
+  mails only the debtors whose email hashes to today's bucket (`emailBucket_(email, REMINDER_DAYS)`),
+  spread over `REMINDER_DAYS` weekday mornings starting Monday (currently **2** — Mon & Tue, since
+  only ~50 people are on site). Each person is reminded once a week, no day exceeds the quota. It is
+  **stateless** — a person's day is derived from their email, so there's no tracking to corrupt, no
+  double-send; a missed run just waits a week.
 - A person is reminded only once their **oldest unpaid item is older than `REMINDER_GRACE_DAYS`**
   (currently 3) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
   `logReminderPlan` honor this.
@@ -113,4 +114,5 @@ Tab names and headers are defined by the constants at the top of `Code.js`
   send in try/catch so one bad address never aborts the batch. `sendTestReminder` previews the
   mail for `TEST_EMAIL` only, ignoring grace/bucket — safe to run with the real list loaded.
 - The daily trigger needs the project **time zone set to Europe/Istanbul** so "morning" and the
-  weekday are local. Don't change the bucket count (5) casually — it shifts everyone's day.
+  weekday are local. Changing `REMINDER_DAYS` re-buckets everyone (shifts their day) — expected
+  when you deliberately add/remove send-days, just know it reshuffles assignments.

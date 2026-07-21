@@ -65,10 +65,11 @@ and total, and all their unpaid rows are checked. Ticking boxes by hand still wo
 
 ## Debt reminder emails (currently off)
 
-Reminders are sent from the Google account that runs the script (Gmail). With ~200+ people,
-free Gmail's ~100-recipient/day limit means everyone can't be emailed at once, so
-**`sendDailyReminders`** spreads debtors across the five weekdays by a hash of their email:
-each person gets one reminder on their weekday morning, and no single day exceeds the limit.
+Reminders are sent from the Google account that runs the script (Gmail). Free Gmail's
+~100-recipient/day limit means a large group can't be emailed at once, so
+**`sendDailyReminders`** spreads debtors across `REMINDER_DAYS` weekday mornings (currently 2 —
+Monday & Tuesday) by a hash of their email: each person gets one reminder on their assigned day,
+and no single day exceeds the limit. Change `REMINDER_DAYS` (1–5) to use more/fewer days.
 It is **stateless** (a person's day comes from their email), so no one is ever double-reminded;
 a missed run just waits for next week — it never over-sends.
 
@@ -89,8 +90,8 @@ person in one run — a manual backup; mind the ~100/day limit. Only rows where 
 FALSE count as debt.
 
 > Note: for a much higher send limit you'd need Google Workspace (~1,500/day) or the parked
-> Outlook/Graph path (`MICROSOFT-EMAIL.md`). The weekday split keeps free Gmail workable up to
-> roughly 450 people.
+> Outlook/Graph path (`MICROSOFT-EMAIL.md`). The split keeps free Gmail workable up to roughly
+> `REMINDER_DAYS` × ~90 debtors (e.g. ~180 at 2 days); raise `REMINDER_DAYS` if the group grows.
 
 ## Handover (getting it off personal accounts)
 

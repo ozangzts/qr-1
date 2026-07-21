@@ -146,6 +146,11 @@ var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 // passes this age.
 var REMINDER_GRACE_DAYS = 3;
 
+// Debtors are split across this many weekday mornings, starting Monday. With N here,
+// only Monday..(Monday+N-1) send; other days are a no-op. Keep N between 1 and 5.
+// N=2 -> Monday + Tuesday (enough while only ~50 people are on site).
+var REMINDER_DAYS = 2;
+
 // For sendTestReminder(): set this to your own address. That function ignores the
 // grace period AND only ever emails THIS one address, so it's safe to run even with
 // the real employee list loaded. Leave '' when not testing.
@@ -227,19 +232,19 @@ function sendReminder_(g) {
 }
 
 /**
- * Daily trigger target: on weekday mornings, emails only the debtors whose email
- * falls in today's bucket (~1/5 of them), so everyone is reminded once a week and
- * the 100/day Gmail limit is never hit. Weekends are skipped.
+ * Daily trigger target: on the configured weekday mornings, emails only the debtors
+ * whose email falls in today's bucket (~1/REMINDER_DAYS of them), so everyone is
+ * reminded once a week and the 100/day Gmail limit is never hit. Other days no-op.
  */
 function sendDailyReminders() {
-  var day = new Date().getDay(); // 0=Sun ... 6=Sat (project time zone)
-  if (day === 0 || day === 6) return; // weekend: nothing to do
-  var todayBucket = day - 1;          // Mon->0, Tue->1, ... Fri->4
+  var day = new Date().getDay();               // 0=Sun ... 6=Sat (project time zone)
+  if (day < 1 || day > REMINDER_DAYS) return;  // only Mon..(Mon+REMINDER_DAYS-1)
+  var todayBucket = day - 1;                    // Mon->0, Tue->1, ...
 
   unpaidDebtByPerson_().forEach(function (g) {
-    if (emailBucket_(g.email, 5) !== todayBucket) return; // not this person's day
-    if (!isDueForReminder_(g)) return;                    // still within the grace period
-    if (MailApp.getRemainingDailyQuota() < 1) return;     // quota gone; caught next week
+    if (emailBucket_(g.email, REMINDER_DAYS) !== todayBucket) return; // not this person's day
+    if (!isDueForReminder_(g)) return;                                // within grace period
+    if (MailApp.getRemainingDailyQuota() < 1) return;                // quota gone; next cycle
     sendReminder_(g);
   });
 }
@@ -283,15 +288,16 @@ function sendAllRemindersNow() {
  * trust the daily trigger. Run from the editor and check View > Logs.
  */
 function logReminderPlan() {
-  var days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-  var counts = [0, 0, 0, 0, 0];
+  var days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].slice(0, REMINDER_DAYS);
+  var counts = [];
+  for (var d = 0; d < REMINDER_DAYS; d++) counts.push(0);
   var fresh = 0;
   unpaidDebtByPerson_().forEach(function (g) {
     if (!isDueForReminder_(g)) { fresh++; return; } // within grace period, not yet reminded
-    counts[emailBucket_(g.email, 5)]++;
+    counts[emailBucket_(g.email, REMINDER_DAYS)]++;
   });
   var total = 0;
-  for (var i = 0; i < 5; i++) {
+  for (var i = 0; i < REMINDER_DAYS; i++) {
     total += counts[i];
     Logger.log(days[i] + ': ' + counts[i] + ' kişi');
   }
