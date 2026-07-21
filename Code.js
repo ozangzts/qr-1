@@ -251,10 +251,57 @@ function logReminderPlan() {
  * -------------------------------------------------------------------------- */
 
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Kurulum')
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Kurulum')
     .addItem('Sayfaları oluştur ve örnek veri ekle', 'setup')
     .addToUi();
+  ui.createMenu('Kantin')
+    .addItem('Bir kişinin borcunu ödendi yap', 'markPersonPaid')
+    .addToUi();
+}
+
+/**
+ * Manager helper (Kantin menu): marks ALL of one person's unpaid rows as paid at
+ * once, matched by email. Shows a confirmation (name, row count, total) before
+ * applying. Manual per-row checkbox editing keeps working exactly as before.
+ */
+function markPersonPaid() {
+  var ui = SpreadsheetApp.getUi();
+
+  var resp = ui.prompt('Ödendi işaretle',
+    'Ödendi yapılacak kişinin e-posta adresini girin:', ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+
+  var email = String(resp.getResponseText()).trim().toLowerCase();
+  if (!email) { ui.alert('E-posta girilmedi.'); return; }
+
+  var sheet = getSheet(SHEET_RECORDS);
+  var rows = sheet.getDataRange().getValues();
+
+  var rowNums = []; // 1-based sheet rows to mark
+  var total = 0;
+  var name = '';
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][2]).trim().toLowerCase() !== email) continue;
+    var paid = rows[i][7] === true || String(rows[i][7]).toUpperCase() === 'TRUE';
+    if (paid) continue;
+    rowNums.push(i + 1);
+    total += Number(rows[i][6]) || 0;
+    if (!name) name = String(rows[i][1]).trim();
+  }
+
+  if (rowNums.length === 0) {
+    ui.alert('Bu e-postaya ait ödenmemiş kayıt bulunamadı.');
+    return;
+  }
+
+  var confirm = ui.alert('Onay',
+    (name || email) + ' — ' + rowNums.length + ' satır, toplam ' + formatMoney(total) +
+    ' ödendi olarak işaretlenecek. Onaylıyor musunuz?', ui.ButtonSet.YES_NO);
+  if (confirm !== ui.Button.YES) return;
+
+  rowNums.forEach(function (r) { sheet.getRange(r, 8).setValue(true); });
+  ui.alert(rowNums.length + ' satır ödendi olarak işaretlendi.');
 }
 
 /** Creates the sheets (if missing) and seeds sample employee/product data. */

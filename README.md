@@ -57,7 +57,11 @@ Each record lands in the `Kayıtlar` tab as **one row per product**:
 `Zaman | Ad Soyad | E-posta | Ürün | Adet | Birim Fiyat | Tutar | Ödendi`
 
 When a debt is settled, set the **`Ödendi`** cell of the relevant rows to `TRUE` (checked);
-the weekly email counts only rows where `Ödendi = FALSE` as debt.
+reminders count only rows where `Ödendi = FALSE` as debt.
+
+To settle someone's whole tab at once instead of ticking each box, use the **Kantin** menu →
+**"Bir kişinin borcunu ödendi yap"**: enter the person's email, confirm the shown row count
+and total, and all their unpaid rows are checked. Ticking boxes by hand still works as before.
 
 ## Debt reminder emails (currently off)
 
