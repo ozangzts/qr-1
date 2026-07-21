@@ -146,6 +146,11 @@ var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 // passes this age.
 var REMINDER_GRACE_DAYS = 3;
 
+// For sendTestReminder(): set this to your own address. That function ignores the
+// grace period AND only ever emails THIS one address, so it's safe to run even with
+// the real employee list loaded. Leave '' when not testing.
+var TEST_EMAIL = '';
+
 /**
  * Unpaid debt per person: [{ email, name, items:[{product,quantity,amount}], total }].
  * Repeats of the same product (bought on different days) are merged into one line.
@@ -237,6 +242,31 @@ function sendDailyReminders() {
     if (MailApp.getRemainingDailyQuota() < 1) return;     // quota gone; caught next week
     sendReminder_(g);
   });
+}
+
+/**
+ * Test helper: emails the reminder for TEST_EMAIL's debt, ignoring the grace period
+ * and the weekday bucket. It only ever emails TEST_EMAIL, so it never touches the
+ * real list — run it any time to preview the mail. Set TEST_EMAIL and add a matching
+ * unpaid row in Kayıtlar first. Run from the editor; check View > Logs.
+ */
+function sendTestReminder() {
+  var target = String(TEST_EMAIL).trim().toLowerCase();
+  if (!target) {
+    Logger.log('Önce TEST_EMAIL değişkenini kendi adresinle doldurun.');
+    return;
+  }
+  var match = null;
+  unpaidDebtByPerson_().forEach(function (g) {
+    if (g.email.trim().toLowerCase() === target) match = g;
+  });
+  if (!match) {
+    Logger.log('TEST_EMAIL (' + TEST_EMAIL + ') için ödenmemiş kayıt yok. ' +
+      'Kayıtlar sekmesine bu e-postayla bir test satırı ekleyip tekrar deneyin.');
+    return;
+  }
+  sendReminder_(match);
+  Logger.log('Test hatırlatma maili gönderildi: ' + match.email);
 }
 
 /** Manual "mail every due unpaid person now" (backup). Mind the 100/day Gmail limit. */

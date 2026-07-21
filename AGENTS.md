@@ -110,6 +110,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
   `logReminderPlan` honor this.
 - `sendAllRemindersNow` mails everyone in one run (manual backup; can exceed the 100/day cap).
   `logReminderPlan` logs the per-weekday counts to verify the split. `sendReminder_` wraps each
-  send in try/catch so one bad address never aborts the batch.
+  send in try/catch so one bad address never aborts the batch. `sendTestReminder` previews the
+  mail for `TEST_EMAIL` only, ignoring grace/bucket — safe to run with the real list loaded.
 - The daily trigger needs the project **time zone set to Europe/Istanbul** so "morning" and the
   weekday are local. Don't change the bucket count (5) casually — it shifts everyone's day.
