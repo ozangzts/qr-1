@@ -85,7 +85,7 @@ To enable:
    evaluated in local time.
 
 Helpers: **`logReminderPlan`** logs how many debtors fall on each weekday (run it to confirm
-the split is balanced and under the limit). **`sendAllRemindersNow`** mails every unpaid
+the split is balanced and under the limit). **`sendRemindersNow`** mails every due unpaid
 person in one run — a manual backup; mind the ~100/day limit. Only rows where `Ödendi` is
 FALSE count as debt.
 
@@ -124,7 +124,7 @@ reprinted.**
    function dropdown → **Run** once → approve the consent screen. This only triggers Google's
    permission prompt (one run authorizes every scope the project needs); `getData` just reads
    and changes nothing. Do **not** run the reminder senders (`sendDailyReminders`,
-   `sendAllRemindersNow`) for this — they actually send mail.
+   `sendRemindersNow`, `sendRemindersNowIgnoreGrace`) for this — they actually send mail.
 4. **Deploy fresh.** **Deploy → New deployment → Web app**, *Execute as* **Me**, *Who has
    access* as needed → copy the new URL.
 5. **Regenerate the QR** from the new URL and reprint it.

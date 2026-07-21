@@ -135,7 +135,7 @@ function saveOrder(order) {
  *   Also set Project Settings > Time zone to Europe/Istanbul so "morning" and the
  *   weekday are evaluated in local time.
  *
- * sendAllRemindersNow stays as a manual "mail everyone now" (mind the 100/day limit).
+ * sendRemindersNow / sendRemindersNowIgnoreGrace are manual "send now" backups.
  * logReminderPlan logs how many debtors fall on each weekday, to check the split.
  * -------------------------------------------------------------------------- */
 
@@ -279,7 +279,7 @@ function sendTestReminder() {
 }
 
 /** Manual "mail every DUE unpaid person now" (respects the grace period). */
-function sendAllRemindersNow() {
+function sendRemindersNow() {
   unpaidDebtByPerson_().forEach(function (g) {
     if (!isDueForReminder_(g)) return; // skip debt still within the grace period
     sendReminder_(g);
@@ -292,7 +292,7 @@ function sendAllRemindersNow() {
  * Mind the 100/day Gmail limit: with a large list this can exceed it (the daily
  * bucketed sendDailyReminders is what keeps normal runs under the cap).
  */
-function sendRemindersToEveryone() {
+function sendRemindersNowIgnoreGrace() {
   unpaidDebtByPerson_().forEach(function (g) { sendReminder_(g); });
 }
 

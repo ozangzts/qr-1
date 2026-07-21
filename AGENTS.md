@@ -45,7 +45,7 @@ Planned to be extended later to other areas (with different product lists).
 
 | File | Role |
 |------|------|
-| `Code.js` | Server: `doGet` (serves the form), `getData`, `saveOrder`, `sendDailyReminders`/`sendAllRemindersNow`, admin menu + helpers. |
+| `Code.js` | Server: `doGet` (serves the form), `getData`, `saveOrder`, `sendDailyReminders`/`sendRemindersNow`, admin menu + helpers. |
 | `Index.html` | Form UI (name + product selection, live total, save/done screens). |
 | `GraphMail.js` | Optional add-on: send the debt email from Outlook/M365 via Microsoft Graph (app-only) instead of Gmail. Reuses `getSheet`/`SHEET_RECORDS`/`formatMoney` from `Code.js`. |
 | `README.md` | End-user / setup guide (create Sheet, paste, publish, QR). |
@@ -80,7 +80,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
 - No automated tests; setup is manual and tied to a Google account.
 - To verify a change: follow `README.md` to paste into a test Sheet, publish, open the
   URL on a phone/browser, create a record, and confirm the row appears in the `Kayıtlar` tab.
-- For email changes: run `sendAllRemindersNow` manually from the editor (no need to wait for the
+- For email changes: run `sendRemindersNow` manually from the editor (no need to wait for the
   trigger) and confirm with a test mail to yourself. Gmail has a low daily send limit (~100).
 
 ## Common pitfalls
@@ -109,7 +109,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
 - A person is reminded only once their **oldest unpaid item is older than `REMINDER_GRACE_DAYS`**
   (currently 3) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
   `logReminderPlan` honor this.
-- `sendAllRemindersNow` mails all DUE debtors in one run (respects grace); `sendRemindersToEveryone`
+- `sendRemindersNow` mails all DUE debtors in one run (respects grace); `sendRemindersNowIgnoreGrace`
   mails EVERY unpaid person ignoring grace. Both are manual backups; can exceed the 100/day cap.
   `logReminderPlan` logs the per-weekday counts to verify the split. `sendReminder_` wraps each
   send in try/catch so one bad address never aborts the batch. `sendTestReminder` previews the
