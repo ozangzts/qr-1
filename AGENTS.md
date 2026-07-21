@@ -109,7 +109,8 @@ Tab names and headers are defined by the constants at the top of `Code.js`
 - A person is reminded only once their **oldest unpaid item is older than `REMINDER_GRACE_DAYS`**
   (currently 3) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
   `logReminderPlan` honor this.
-- `sendAllRemindersNow` mails everyone in one run (manual backup; can exceed the 100/day cap).
+- `sendAllRemindersNow` mails all DUE debtors in one run (respects grace); `sendRemindersToEveryone`
+  mails EVERY unpaid person ignoring grace. Both are manual backups; can exceed the 100/day cap.
   `logReminderPlan` logs the per-weekday counts to verify the split. `sendReminder_` wraps each
   send in try/catch so one bad address never aborts the batch. `sendTestReminder` previews the
   mail for `TEST_EMAIL` only, ignoring grace/bucket — safe to run with the real list loaded.

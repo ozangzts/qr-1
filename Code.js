@@ -278,12 +278,22 @@ function sendTestReminder() {
   Logger.log('Test hatırlatma maili gönderildi: ' + match.email);
 }
 
-/** Manual "mail every due unpaid person now" (backup). Mind the 100/day Gmail limit. */
+/** Manual "mail every DUE unpaid person now" (respects the grace period). */
 function sendAllRemindersNow() {
   unpaidDebtByPerson_().forEach(function (g) {
     if (!isDueForReminder_(g)) return; // skip debt still within the grace period
     sendReminder_(g);
   });
+}
+
+/**
+ * Manual "mail EVERY unpaid person now, IGNORING the grace period" — includes fresh
+ * (same-day) debt. For when you want to reach all debtors at once regardless of age.
+ * Mind the 100/day Gmail limit: with a large list this can exceed it (the daily
+ * bucketed sendDailyReminders is what keeps normal runs under the cap).
+ */
+function sendRemindersToEveryone() {
+  unpaidDebtByPerson_().forEach(function (g) { sendReminder_(g); });
 }
 
 /**
@@ -541,7 +551,7 @@ function debtEmailHtml_(name, items, total) {
     'Kantindeki bazı ürünlerimiz afiyetle tüketildi, ücreti ise hâlâ bizi bekliyor 😄. ' +
     'Yoğunluk içinde gözden kaçmış olabileceğini düşünerek küçük bir hatırlatma yapmak istedik. ' +
     'Uygun olduğunuzda aşağıdaki <span style="color:#d32f2f;font-weight:bold;">toplam ' +
-    formatMoney(total) + '</span> tutarını ' + PAYMENT_CONTACT + ' ödemenizi rica ederiz 🙏.<br><br>' +
+    formatMoney(total) + '</span> tutarını <b>' + PAYMENT_CONTACT + '</b> ödemenizi rica ederiz 🙏.<br><br>' +
     'Şimdiden teşekkürler, afiyet olsun! 💙' +
     '</div>' +
     '<table width="100%" cellpadding="0" cellspacing="0" ' +
