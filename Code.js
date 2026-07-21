@@ -141,6 +141,10 @@ function saveOrder(order) {
 
 var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 
+// Who to pay, shown in the reminder email. Include the Turkish dative suffix
+// (…'a / …'e), e.g. "Burcu Koçak'a" — change this one line if the person changes.
+var PAYMENT_CONTACT = "Burcu Koçak'a";
+
 // Don't remind about debt younger than this many days — avoid nagging someone who
 // just bought something. A person is reminded only once their OLDEST unpaid item
 // passes this age.
@@ -537,7 +541,7 @@ function debtEmailHtml_(name, items, total) {
     'Kantindeki bazı ürünlerimiz afiyetle tüketildi, ücreti ise hâlâ bizi bekliyor 😄. ' +
     'Yoğunluk içinde gözden kaçmış olabileceğini düşünerek küçük bir hatırlatma yapmak istedik. ' +
     'Uygun olduğunuzda aşağıdaki <span style="color:#d32f2f;font-weight:bold;">toplam ' +
-    formatMoney(total) + '</span> tutarını ödemenizi rica ederiz 🙏.<br><br>' +
+    formatMoney(total) + '</span> tutarını ' + PAYMENT_CONTACT + ' ödemenizi rica ederiz 🙏.<br><br>' +
     'Şimdiden teşekkürler, afiyet olsun! 💙' +
     '</div>' +
     '<table width="100%" cellpadding="0" cellspacing="0" ' +
