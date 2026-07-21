@@ -144,7 +144,7 @@ var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 // Don't remind about debt younger than this many days — avoid nagging someone who
 // just bought something. A person is reminded only once their OLDEST unpaid item
 // passes this age.
-var REMINDER_GRACE_DAYS = 7;
+var REMINDER_GRACE_DAYS = 3;
 
 /**
  * Unpaid debt per person: [{ email, name, items:[{product,quantity,amount}], total }].

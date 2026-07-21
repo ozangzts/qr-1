@@ -99,6 +99,11 @@
       margin-top: 20px; background: none; border: 1px solid var(--line);
       padding: 12px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; color: var(--ink);
     }
+
+    .site-footer {
+      text-align: center; color: var(--muted); font-size: 12px;
+      margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--line);
+    }
   </style>
 </head>
 <body>
@@ -151,12 +156,17 @@
       <p id="doneTotal" class="muted"></p>
       <button class="again" onclick="restart()">Yeni kayıt</button>
     </div>
+
+    <footer class="site-footer">© <span id="year"></span> DEICO Mühendislik</footer>
   </div>
 
   <script>
     var PRODUCTS = [];
     var quantities = {}; // product name -> quantity
     var LAST_EMP_KEY = 'kantin_last_email'; // per-device memory of the last selected person (by unique email)
+
+    // Footer year, kept current automatically.
+    document.getElementById('year').textContent = new Date().getFullYear();
 
     google.script.run
       .withSuccessHandler(onData)

@@ -106,7 +106,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
   week, no day exceeds the quota. It is **stateless** — a person's day is derived from their
   email, so there's no tracking to corrupt, no double-send; a missed run just waits a week.
 - A person is reminded only once their **oldest unpaid item is older than `REMINDER_GRACE_DAYS`**
-  (default 7) — `isDueForReminder_`. Fresh same-day purchases aren't nagged; both senders and
+  (currently 3) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
   `logReminderPlan` honor this.
 - `sendAllRemindersNow` mails everyone in one run (manual backup; can exceed the 100/day cap).
   `logReminderPlan` logs the per-weekday counts to verify the split. `sendReminder_` wraps each

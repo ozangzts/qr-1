@@ -73,8 +73,8 @@ It is **stateless** (a person's day comes from their email), so no one is ever d
 a missed run just waits for next week — it never over-sends.
 
 A reminder is only sent once a person's **oldest unpaid item is older than
-`REMINDER_GRACE_DAYS`** (default 7). So someone who just bought something today isn't nagged —
-they're reminded only after the debt has sat for about a week.
+`REMINDER_GRACE_DAYS`** (currently 3 days). So someone who just bought something isn't nagged —
+they're reminded only after the debt has sat a few days.
 
 To enable:
 
