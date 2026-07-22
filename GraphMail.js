@@ -1,3 +1,11 @@
+/* ============================================================================
+ * ⚠️ KULLANILMIYOR / NOT IN USE — parked.
+ * Aktif sistem e-postaları GMAIL üzerinden (Code.js) gönderir. Bu dosyadaki
+ * Outlook/Microsoft Graph fonksiyonları şu an KULLANILMIYOR (Entra erişimi
+ * verilmediği için beklemede). Silinmedi; ileride Outlook yoluna geçilmek
+ * istenirse diye duruyor. Buradaki fonksiyonları normal işleyişte ÇALIŞTIRMAYIN.
+ * ============================================================================ */
+
 /**
  * GraphMail.js — sends the canteen debt email from an Outlook / Microsoft account
  * via the Microsoft Graph API, instead of Gmail (MailApp).

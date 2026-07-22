@@ -100,7 +100,7 @@ Apps Script editöründe ilgili satır güncellenip **kaydedilir**.
 | **Ürün / fiyat** | `Ürünler` sekmesi | Satır eklenir/çıkarılır, fiyat güncellenir. Yeniden yayına gerek yoktur. |
 | **Çalışan ekleme/çıkarma** | `Çalışanlar` sekmesi | Ad Soyad + benzersiz E-posta girilir. Yeniden yayına gerek yoktur. |
 | **Ödemenin yapılacağı kişi** (e-postada geçen isim) | `Code.js` → `PAYMENT_CONTACT` | Örn. `"Burcu Koçak'a"`. Türkçe ek dahil yazılır ("…'a / …'e"). |
-| **Bekleme süresi** (borç kaç gün sonra hatırlatılsın) | `Code.js` → `REMINDER_GRACE_DAYS` | Örn. `3`. Alışverişi bu süreden yeni olan kişiye e-posta gitmez. |
+| **Bekleme süresi** (borç kaç gün sonra hatırlatılsın) | `Code.js` → `REMINDER_GRACE_DAYS` | Örn. `2`. Alışverişi bu süreden yeni olan kişiye e-posta gitmez. |
 | **Hatırlatma günü sayısı** | `Code.js` → `REMINDER_DAYS` | Çalışanların kaç iş gününe bölüneceği (Pazartesi'den başlar). Örn. `2` = Pazartesi + Salı. 1–5 arası bir değer. |
 | **E-posta konusu** | `Code.js` → `REMINDER_SUBJECT` | Örn. `'🥪 Minik bir kantin hatırlatması 😊'`. |
 | **E-postanın metni ve tasarımı (HTML)** | `Code.js` → `debtEmailHtml_` fonksiyonu | Metin, renkler, başlık ve alt bilgi burada üretilir. Kullanılan renkler: `#004c7a` (koyu mavi), `#e8f1fb` (açık mavi), `#ff6f00` (turuncu), `#d32f2f` (kırmızı). |

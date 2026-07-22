@@ -148,7 +148,7 @@ var PAYMENT_CONTACT = "Burcu Koçak'a";
 // Don't remind about debt younger than this many days — avoid nagging someone who
 // just bought something. A person is reminded only once their OLDEST unpaid item
 // passes this age.
-var REMINDER_GRACE_DAYS = 3;
+var REMINDER_GRACE_DAYS = 2;
 
 // Debtors are split across this many weekday mornings, starting Monday. With N here,
 // only Monday..(Monday+N-1) send; other days are a no-op. Keep N between 1 and 5.

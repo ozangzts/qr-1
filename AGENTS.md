@@ -107,7 +107,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
   **stateless** — a person's day is derived from their email, so there's no tracking to corrupt, no
   double-send; a missed run just waits a week.
 - A person is reminded only once their **oldest unpaid item is older than `REMINDER_GRACE_DAYS`**
-  (currently 3) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
+  (currently 2) — `isDueForReminder_`. Fresh purchases aren't nagged; both senders and
   `logReminderPlan` honor this.
 - `sendRemindersNow` mails all DUE debtors in one run (respects grace); `sendRemindersNowIgnoreGrace`
   mails EVERY unpaid person ignoring grace. Both are manual backups; can exceed the 100/day cap.
