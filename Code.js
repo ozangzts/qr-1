@@ -145,6 +145,10 @@ var REMINDER_SUBJECT = '🥪 Minik bir kantin hatırlatması 😊';
 // (…'a / …'e), e.g. "Burcu Koçak'a" — change this one line if the person changes.
 var PAYMENT_CONTACT = "Burcu Koçak'a";
 
+// Optional: also send a copy (CC) of every reminder to this address — visible to the
+// recipient. Leave '' for no CC. (Use options.bcc below instead if it should be hidden.)
+var CC_EMAIL = '';
+
 // Don't remind about debt younger than this many days — avoid nagging someone who
 // just bought something. A person is reminded only once their OLDEST unpaid item
 // passes this age.
@@ -225,11 +229,13 @@ function isDueForReminder_(g) {
  */
 function sendReminder_(g) {
   try {
-    MailApp.sendEmail({
+    var options = {
       to: g.email,
       subject: REMINDER_SUBJECT,
       htmlBody: debtEmailHtml_(g.name, g.items, g.total)
-    });
+    };
+    if (CC_EMAIL) options.cc = CC_EMAIL; // copy every reminder to CC_EMAIL if set
+    MailApp.sendEmail(options);
   } catch (e) {
     Logger.log('Mail gönderilemedi (' + g.email + '): ' + e);
   }

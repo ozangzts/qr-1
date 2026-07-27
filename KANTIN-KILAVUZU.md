@@ -104,6 +104,7 @@ Apps Script editöründe ilgili satır güncellenip **kaydedilir**.
 | **Hatırlatma günü sayısı** | `Code.js` → `REMINDER_DAYS` | Çalışanların kaç iş gününe bölüneceği (Pazartesi'den başlar). Örn. `2` = Pazartesi + Salı. 1–5 arası bir değer. |
 | **E-posta konusu** | `Code.js` → `REMINDER_SUBJECT` | Örn. `'🥪 Minik bir kantin hatırlatması 😊'`. |
 | **E-postanın metni ve tasarımı (HTML)** | `Code.js` → `debtEmailHtml_` fonksiyonu | Metin, renkler, başlık ve alt bilgi burada üretilir. Kullanılan renkler: `#004c7a` (koyu mavi), `#e8f1fb` (açık mavi), `#ff6f00` (turuncu), `#d32f2f` (kırmızı). |
+| **Kopya (CC) alacak kişi** | `Code.js` → `CC_EMAIL` | Her hatırlatmanın bir kopyası bu adrese de gider (alıcı bunu görür). Kopya istenmiyorsa boş (`''`) bırakılır. |
 | **Test e-posta adresi** | `Code.js` → `TEST_EMAIL` | `sendTestReminder` fonksiyonunun e-posta göndereceği adres. |
 | **Formun başlığı / görünümü / rengi** | `Index.html` | Başlık: `<h1>🥪 Kantin Kayıt</h1>` ve `doGet` içindeki `setTitle`. Kurumsal renk: en üstteki `--brand` değişkeni (`#0065B3`). |
 
