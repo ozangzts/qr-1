@@ -102,7 +102,7 @@ Tab names and headers are defined by the constants at the top of `Code.js`
   is **parked** — the Entra team wouldn't add the account. See the memory note if reviving it.
 - Free Gmail caps at **~100 recipients/day**. So `sendDailyReminders` (the daily-trigger target)
   mails only the debtors whose email hashes to today's bucket (`emailBucket_(email, REMINDER_DAYS)`),
-  spread over `REMINDER_DAYS` weekday mornings starting Monday (currently **2** — Mon & Tue, since
+  spread over `REMINDER_DAYS` weekday mornings starting Monday (currently **1** — Mondays only, since
   only ~50 people are on site). Each person is reminded once a week, no day exceeds the quota. It is
   **stateless** — a person's day is derived from their email, so there's no tracking to corrupt, no
   double-send; a missed run just waits a week.

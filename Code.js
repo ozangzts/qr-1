@@ -156,8 +156,8 @@ var REMINDER_GRACE_DAYS = 2;
 
 // Debtors are split across this many weekday mornings, starting Monday. With N here,
 // only Monday..(Monday+N-1) send; other days are a no-op. Keep N between 1 and 5.
-// N=2 -> Monday + Tuesday (enough while only ~50 people are on site).
-var REMINDER_DAYS = 2;
+// N=1 -> Mondays only (everyone in one group). Raise it if debtors approach ~90/day.
+var REMINDER_DAYS = 1;
 
 // For sendTestReminder(): set this to your own address. That function ignores the
 // grace period AND only ever emails THIS one address, so it's safe to run even with

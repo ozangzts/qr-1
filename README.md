@@ -67,8 +67,8 @@ and total, and all their unpaid rows are checked. Ticking boxes by hand still wo
 
 Reminders are sent from the Google account that runs the script (Gmail). Free Gmail's
 ~100-recipient/day limit means a large group can't be emailed at once, so
-**`sendDailyReminders`** spreads debtors across `REMINDER_DAYS` weekday mornings (currently 2 —
-Monday & Tuesday) by a hash of their email: each person gets one reminder on their assigned day,
+**`sendDailyReminders`** spreads debtors across `REMINDER_DAYS` weekday mornings (currently 1 —
+Mondays only) by a hash of their email: each person gets one reminder on their assigned day,
 and no single day exceeds the limit. Change `REMINDER_DAYS` (1–5) to use more/fewer days.
 It is **stateless** (a person's day comes from their email), so no one is ever double-reminded;
 a missed run just waits for next week — it never over-sends.
