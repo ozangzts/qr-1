@@ -154,10 +154,15 @@ var CC_EMAIL = '';
 // passes this age.
 var REMINDER_GRACE_DAYS = 2;
 
-// Debtors are split across this many weekday mornings, starting Monday. With N here,
-// only Monday..(Monday+N-1) send; other days are a no-op. Keep N between 1 and 5.
-// N=1 -> Mondays only (everyone in one group). Raise it if debtors approach ~90/day.
+// Debtors are split across this many consecutive days, starting REMINDER_START_DAY.
+// With N here, only those days send; others are a no-op. Keep N between 1 and 5.
+// N=1 -> one group on the start day. Raise it if debtors approach ~90/day.
 var REMINDER_DAYS = 1;
+
+// Which weekday the reminder window starts on: 1=Monday, 2=Tuesday, ... 5=Friday.
+// Reminders go out on REMINDER_DAYS day(s) beginning here. Normally 1 (Monday).
+// To test the send on another day, set this to today's weekday (e.g. 2 for Tuesday).
+var REMINDER_START_DAY = 1;
 
 // For sendTestReminder(): set this to your own address. That function ignores the
 // grace period AND only ever emails THIS one address, so it's safe to run even with
@@ -248,8 +253,8 @@ function sendReminder_(g) {
  */
 function sendDailyReminders() {
   var day = new Date().getDay();               // 0=Sun ... 6=Sat (project time zone)
-  if (day < 1 || day > REMINDER_DAYS) return;  // only Mon..(Mon+REMINDER_DAYS-1)
-  var todayBucket = day - 1;                    // Mon->0, Tue->1, ...
+  if (day < REMINDER_START_DAY || day > REMINDER_START_DAY + REMINDER_DAYS - 1) return;
+  var todayBucket = day - REMINDER_START_DAY;   // start day -> 0, next -> 1, ...
 
   unpaidDebtByPerson_().forEach(function (g) {
     if (emailBucket_(g.email, REMINDER_DAYS) !== todayBucket) return; // not this person's day
@@ -308,7 +313,7 @@ function sendRemindersNowIgnoreGrace() {
  * trust the daily trigger. Run from the editor and check View > Logs.
  */
 function logReminderPlan() {
-  var days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'].slice(0, REMINDER_DAYS);
+  var weekdayNames = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
   var counts = [];
   for (var d = 0; d < REMINDER_DAYS; d++) counts.push(0);
   var fresh = 0;
@@ -319,7 +324,7 @@ function logReminderPlan() {
   var total = 0;
   for (var i = 0; i < REMINDER_DAYS; i++) {
     total += counts[i];
-    Logger.log(days[i] + ': ' + counts[i] + ' kişi');
+    Logger.log((weekdayNames[REMINDER_START_DAY + i] || ('Gün ' + i)) + ': ' + counts[i] + ' kişi');
   }
   Logger.log('Hatırlatılacak toplam: ' + total);
   Logger.log('Süresi dolmamış (atlanan): ' + fresh);

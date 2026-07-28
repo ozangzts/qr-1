@@ -101,7 +101,8 @@ Apps Script editöründe ilgili satır güncellenip **kaydedilir**.
 | **Çalışan ekleme/çıkarma** | `Çalışanlar` sekmesi | Ad Soyad + benzersiz E-posta girilir. Yeniden yayına gerek yoktur. |
 | **Ödemenin yapılacağı kişi** (e-postada geçen isim) | `Code.js` → `PAYMENT_CONTACT` | Örn. `"Burcu Koçak'a"`. Türkçe ek dahil yazılır ("…'a / …'e"). |
 | **Bekleme süresi** (borç kaç gün sonra hatırlatılsın) | `Code.js` → `REMINDER_GRACE_DAYS` | Örn. `2`. Alışverişi bu süreden yeni olan kişiye e-posta gitmez. |
-| **Hatırlatma günü sayısı** | `Code.js` → `REMINDER_DAYS` | Çalışanların kaç iş gününe bölüneceği (Pazartesi'den başlar). Örn. `1` = sadece Pazartesi, `2` = Pazartesi + Salı. 1–5 arası bir değer. |
+| **Hatırlatmanın başladığı gün** | `Code.js` → `REMINDER_START_DAY` | Gönderim hangi günden başlasın: `1`=Pazartesi, `2`=Salı, ... `5`=Cuma. Örn. sadece Salı göndermek için `2`. |
+| **Hatırlatma günü sayısı** | `Code.js` → `REMINDER_DAYS` | Başlangıç gününden itibaren kaç güne bölüneceği. Örn. `1` = tek gün, `2` = iki gün. 1–5 arası bir değer. |
 | **E-posta konusu** | `Code.js` → `REMINDER_SUBJECT` | Örn. `'🥪 Minik bir kantin hatırlatması 😊'`. |
 | **E-postanın metni ve tasarımı (HTML)** | `Code.js` → `debtEmailHtml_` fonksiyonu | Metin, renkler, başlık ve alt bilgi burada üretilir. Kullanılan renkler: `#004c7a` (koyu mavi), `#e8f1fb` (açık mavi), `#ff6f00` (turuncu), `#d32f2f` (kırmızı). |
 | **Kopya (CC) alacak kişi** | `Code.js` → `CC_EMAIL` | Her hatırlatmanın bir kopyası bu adrese de gider (alıcı bunu görür). Kopya istenmiyorsa boş (`''`) bırakılır. |
