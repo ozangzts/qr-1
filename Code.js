@@ -147,7 +147,7 @@ var PAYMENT_CONTACT = "Burcu Koçak'a";
 
 // Optional: also send a copy (CC) of every reminder to this address — visible to the
 // recipient. Leave '' for no CC. (Use options.bcc below instead if it should be hidden.)
-var CC_EMAIL = '';
+var CC_EMAIL = 'bkocak@deico.com.tr, sozen@deico.com.tr';
 
 // Don't remind about debt younger than this many days — avoid nagging someone who
 // just bought something. A person is reminded only once their OLDEST unpaid item
@@ -170,14 +170,16 @@ var REMINDER_START_DAY = 1;
 var TEST_EMAIL = '';
 
 /**
- * Unpaid debt per person: [{ email, name, items:[{product,quantity,amount}], total }].
- * Repeats of the same product (bought on different days) are merged into one line.
+ * Unpaid debt per person: [{ email, name, items:[{date,product,quantity,amount}], total }].
+ * Rows are grouped by product + purchase day, so the same product bought on different
+ * days shows as separate dated lines (same product on the same day stays merged).
  */
 function unpaidDebtByPerson_() {
   var sheet = getSheet(SHEET_RECORDS);
   var rows = sheet.getDataRange().getValues();
+  var tz = Session.getScriptTimeZone();
 
-  var groups = {}; // email -> { name, items: {product -> {product, quantity, amount}}, total }
+  var groups = {}; // email -> { name, items: {product|day -> {date,product,quantity,amount,ts}}, total }
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     var paid = row[7] === true || String(row[7]).toUpperCase() === 'TRUE';
@@ -191,23 +193,31 @@ function unpaidDebtByPerson_() {
     }
     var g = groups[email];
     var product = String(row[3]);
-    if (!g.items[product]) {
-      g.items[product] = { product: product, quantity: 0, amount: 0 };
-    }
-    g.items[product].quantity += Number(row[4]) || 0;
-    g.items[product].amount += Number(row[6]) || 0;
-    g.total += Number(row[6]) || 0;
 
-    // Oldest unpaid timestamp (Zaman, col 0) drives the grace period.
+    // Timestamp (Zaman, col 0): drives the grace period AND the shown purchase date.
     var ts = (row[0] instanceof Date) ? row[0].getTime() : Date.parse(row[0]);
     if (isNaN(ts)) ts = 0; // missing/invalid timestamp -> treat as old (include)
+    var dateStr = ts ? Utilities.formatDate(new Date(ts), tz, 'dd.MM.yyyy') : '-';
+
+    var key = product + '|' + dateStr; // same product same day -> one line
+    if (!g.items[key]) {
+      g.items[key] = { date: dateStr, product: product, quantity: 0, amount: 0, ts: ts };
+    }
+    g.items[key].quantity += Number(row[4]) || 0;
+    g.items[key].amount += Number(row[6]) || 0;
+    if (ts && (!g.items[key].ts || ts < g.items[key].ts)) g.items[key].ts = ts;
+    g.total += Number(row[6]) || 0;
+
     if (g.oldest === null || ts < g.oldest) g.oldest = ts;
   }
 
   return Object.keys(groups).map(function (email) {
     var g = groups[email];
-    var items = Object.keys(g.items).map(function (p) { return g.items[p]; });
-    items.sort(function (a, b) { return a.product.localeCompare(b.product, 'tr'); });
+    var items = Object.keys(g.items).map(function (k) { return g.items[k]; });
+    items.sort(function (a, b) {
+      if (a.ts !== b.ts) return a.ts - b.ts;            // oldest purchases first
+      return a.product.localeCompare(b.product, 'tr');  // then by product name
+    });
     return { email: email, name: g.name, items: items, total: g.total, oldest: g.oldest };
   }).filter(function (g) { return g.total > 0; });
 }
@@ -287,6 +297,49 @@ function sendTestReminder() {
   }
   sendReminder_(match);
   Logger.log('Test hatırlatma maili gönderildi: ' + match.email);
+}
+
+/**
+ * Safe layout preview: emails a sample reminder to TEST_EMAIL only — NO CC, and it
+ * only READS the Ürünler sheet (never touches Kayıtlar). It picks 3-5 random real
+ * products with random recent dates and quantities, so you can check the email's
+ * look (incl. the date column) without adding test rows to the live sheet.
+ * Set TEST_EMAIL, then run from the editor.
+ */
+function previewReminderEmail() {
+  var to = String(TEST_EMAIL).trim();
+  if (!to) { Logger.log('Önce TEST_EMAIL değişkenini doldurun.'); return; }
+
+  var products = getProducts();
+  if (!products.length) { Logger.log('Ürünler sayfasında ürün yok.'); return; }
+
+  // Shuffle the real products and take 3-5 of them.
+  var pool = products.slice();
+  for (var i = pool.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+  }
+  var count = Math.min(pool.length, 3 + Math.floor(Math.random() * 3)); // 3..5
+
+  var tz = Session.getScriptTimeZone();
+  var now = Date.now();
+  var total = 0;
+  var items = pool.slice(0, count).map(function (p) {
+    var qty = 1 + Math.floor(Math.random() * 3);       // 1..3
+    var ts = now - (1 + Math.floor(Math.random() * 14)) * 24 * 60 * 60 * 1000; // 1..14 gün önce
+    var amount = qty * (Number(p.price) || 0);
+    total += amount;
+    return { date: Utilities.formatDate(new Date(ts), tz, 'dd.MM.yyyy'),
+             product: p.name, quantity: qty, amount: amount, ts: ts };
+  });
+  items.sort(function (a, b) { return a.ts - b.ts; }); // oldest first
+
+  MailApp.sendEmail({
+    to: to,
+    subject: REMINDER_SUBJECT,
+    htmlBody: debtEmailHtml_('Örnek Kişi', items, total)
+  });
+  Logger.log('Örnek önizleme maili gönderildi (CC yok): ' + to);
 }
 
 /** Manual "mail every DUE unpaid person now" (respects the grace period). */
@@ -516,7 +569,7 @@ function escapeHtml_(s) {
  * Builds the HTML body of a debt email, styled to match DEICO's email template
  * (dark-blue header/footer, light-blue info box with an orange accent, table).
  * Email-safe: all styles inline, table-based layout, year rendered server-side.
- * items = [{ product, quantity, amount }], total = number.
+ * items = [{ date, product, quantity, amount }], total = number.
  */
 function debtEmailHtml_(name, items, total) {
   var year = new Date().getFullYear();
@@ -527,6 +580,7 @@ function debtEmailHtml_(name, items, total) {
 
   var itemRows = items.map(function (it) {
     return '<tr>' +
+      '<td style="' + cellBase + '">' + escapeHtml_(it.date || '-') + '</td>' +
       '<td style="' + cellBase + '">' + escapeHtml_(it.product) + '</td>' +
       '<td align="center" style="' + cellBase + '">' + it.quantity + '</td>' +
       '<td align="right" style="' + cellBase + '">' + formatMoney(it.amount) + '</td>' +
@@ -535,7 +589,7 @@ function debtEmailHtml_(name, items, total) {
 
   var totalRow =
     '<tr>' +
-    '<td colspan="2" align="right" style="padding:8px 10px;font-weight:bold;' +
+    '<td colspan="3" align="right" style="padding:8px 10px;font-weight:bold;' +
     'border-top:2px solid #004c7a;">Genel Toplam</td>' +
     '<td align="right" style="padding:8px 10px;font-weight:bold;color:#d32f2f;' +
     'border-top:2px solid #004c7a;">' + formatMoney(total) + '</td>' +
@@ -568,6 +622,7 @@ function debtEmailHtml_(name, items, total) {
     '<table width="100%" cellpadding="0" cellspacing="0" ' +
     'style="width:100%;border-collapse:collapse;margin-top:20px;font-size:13px;">' +
     '<tr>' +
+    '<th align="left" style="' + thBase + '">Tarih</th>' +
     '<th align="left" style="' + thBase + '">Ürün</th>' +
     '<th align="center" style="' + thBase + '">Adet</th>' +
     '<th align="right" style="' + thBase + '">Tutar</th>' +
